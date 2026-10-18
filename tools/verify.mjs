@@ -782,6 +782,31 @@ try {
   check('a captured blueprint can be pasted again', bp && bp.repasted > 50 && bp.roundTripOk,
     `${bp && bp.repasted} blocks`);
 
+  // ---- a blueprint served over HTTP can be pasted by URL (the AI-build path)
+  const remote = await ev(`(async () => {
+    const g = window.__MINEWEB__;
+    const res = await fetch('/packs/example-watchtower.json', { cache: 'no-store' });
+    if (!res.ok) return { error: 'example blueprint missing: HTTP ' + res.status };
+    const manifest = await res.json();
+    const p = g.player;
+    // pasteBlueprintNamed centres the build on the player and starts at their feet
+    const ox = Math.floor(p.x) - Math.floor(manifest.size[0] / 2);
+    const oy = Math.floor(p.y);
+    const oz = Math.floor(p.z) - Math.floor(manifest.size[2] / 2);
+    const n = await g.pasteBlueprintNamed('/packs/example-watchtower.json');
+    const cobble = g.resolveKeyForTests('cobblestone');
+    return {
+      n,
+      size: manifest.size,
+      // layer 0 of the watchtower is a full 3x3 cobblestone floor
+      floorOk: g.world.getBlockRaw(ox, oy, oz) === cobble
+        && g.world.getBlockRaw(ox + 2, oy, oz + 2) === cobble,
+    };
+  })()`);
+  report.remoteBlueprint = remote;
+  check('a blueprint can be pasted from a URL', remote && remote.n > 20 && remote.floorOk,
+    JSON.stringify({ blocks: remote && remote.n, floor: remote && remote.floorOk }));
+
   report.logs = logs.slice(0, 10);
   report.summary = {
     passed: report.checks.filter((c) => c.ok).length,

@@ -1523,9 +1523,13 @@ export class Game {
   async pasteBlueprintNamed(name) {
     if (!name) { this.hud.toast('用法：/paste <名字|地址>'); return 0; }
     let bp = BUILTIN_BLUEPRINTS[name] || this.loadBlueprints()[name] || null;
+    // a name that looks like a path or URL is fetched instead of looked up locally
+    const looksLikeUrl = /^(https?:|data:|\.{0,2}\/)/.test(name) || /\.json$/i.test(name);
     try {
-      if (!bp && /^(https?:|data:)/.test(name)) {
-        const res = await fetch(name, { cache: 'no-store' });
+      if (!bp && looksLikeUrl) {
+        const url = new URL(name, location.href).href;
+        const res = await fetch(url, { cache: 'no-store' });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
         bp = await res.json();
       }
     } catch (e) { bp = null; }

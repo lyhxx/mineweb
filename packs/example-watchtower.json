@@ -1,0 +1,46 @@
+{
+  "name": "watchtower",
+  "size": [
+    3,
+    6,
+    3
+  ],
+  "palette": {
+    ".": "air",
+    "S": "cobblestone",
+    "P": "planks",
+    "T": "torch"
+  },
+  "layers": [
+    [
+      "SSS",
+      "SSS",
+      "SSS"
+    ],
+    [
+      "S.S",
+      "S.S",
+      "S.S"
+    ],
+    [
+      "S.S",
+      "S.S",
+      "S.S"
+    ],
+    [
+      "S.S",
+      "S.S",
+      "S.S"
+    ],
+    [
+      "PPP",
+      "P.P",
+      "PPP"
+    ],
+    [
+      "T.T",
+      ".T.",
+      "T.T"
+    ]
+  ]
+}
