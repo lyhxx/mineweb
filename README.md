@@ -20,11 +20,11 @@
 
 | 场景 | 分辨率 | 渲染距离 | 平均帧率 | 1% 低帧 | 99 分位帧耗时 | 最差帧 |
 |---|---|---|---|---|---|---|
-| **修复渲染后（当前）** | 1600×900 | 8 区块 | **119.2 fps** | **117.6 fps** | **8.5 ms** | 25 ms |
-| 同上复测 ×3 | 1600×900 | 8 区块 | 118.7–119.4 fps | 117.6 fps | 8.5 ms | — |
+| **修复渲染后（当前）** | 1600×900 | 8 区块 | **118.8 fps** | **116.3 fps** | **8.6 ms** | 25 ms |
+| 同上复测 ×3 | 1600×900 | 8 区块 | 118.2–119.4 fps | 117.6 fps | 8.5 ms | — |
 | 修复前（网格损坏、且把 1.5 倍无效索引画出来） | 1600×900 | 8 区块 | 118 fps | 59.9–60.2 fps | 16.6 ms | 33 ms |
 
-该帧的渲染规模：**98 个绘制批次 / 10.4 万四边形 / 289 个区块 / 69 MB 内存**。
+该帧的渲染规模：**104 个绘制批次 / 11.2 万四边形 / 289 个区块 / 69 MB 内存**。
 
 游戏逻辑单帧成本为 **0.125 ms**（约 8000 fps 的逻辑上限），说明瓶颈完全在 GPU 光栅化，
 且仍有大量余量 —— 把渲染距离拉到 12 区块仍然稳定在 60 fps 以上。
@@ -281,6 +281,60 @@ node tools/bench.mjs http://127.0.0.1:8137/ shots 10   # 终端 B：真实 Chrom
 - 全部用 WebAudio 合成：不同材质的脚步声（草/沙/雪/木/石/砾）、挖掘声、破坏声、放置声、
   受伤、进食、入水、爆炸、升级音阶、各生物叫声。**没有任何音频文件**。
 
+### 材质包（可更换贴图）
+
+内置贴图是启动时用代码画出来的，但**可以在运行时整个换掉**。材质包是"部分覆盖"：
+只列出要替换的那几张贴图，其余继续用内置的。
+
+```
+packs/my-pack/pack.json      { "name": "My Pack",
+                               "tiles": { "stone": "tiles/stone.png",
+                                          "grass/top": "tiles/grass_top.png" } }
+packs/my-pack/tiles/*.png
+```
+
+键是 `方块` 或 `方块/面`（`north` `south` `west` `east` `top` `bottom`），
+相对路径相对 `pack.json` 解析；单张图加载失败只影响那一格，不会把方块变成透明。
+
+```
+/pack http://127.0.0.1:8137/packs/my-pack/pack.json
+/pack off        # 还原内置材质
+```
+
+细节见 `packs/README.md`，实现见 `js/render/gl.js` 的 `applyTexturePack()`
+与 `js/core/atlas.js` 的 `layersForTileKey()`。
+
+### 蓝图（建筑导入/导出，也是 AI 建房的接口）
+
+蓝图是纯 JSON，小到可以直接贴进聊天框：
+
+```json
+{ "name": "hut", "size": [5,4,5],
+  "palette": { ".": "air", "P": "planks", "C": "cobblestone" },
+  "layers": [ ["CCCCC","CCCCC","CCCCC","CCCCC","CCCCC"], ... ] }
+```
+
+`layers` 自下而上，每层内按 +Z 排行，行内按 +X 排列。
+
+```
+/save my_house                      # 把身边 15×15×15 存进浏览器
+/paste my_house                     # 在脚下重建
+/paste hut                         # 内置示例
+/paste /packs/example-watchtower.json
+/bp                                # 列出可用蓝图
+```
+
+`tools/ai-build.mjs` 是可选的"自然语言 → 蓝图"适配器，输出直接给 `/paste` 用：
+
+```bash
+MINEBUILD_ENDPOINT=https://api.example.com/v1/chat/completions \
+MINEBUILD_KEY=sk-... MINEBUILD_MODEL=gpt-4o-mini \
+node tools/ai-build.mjs "a 7x7 stone watchtower with a ladder" packs/tower.json
+```
+
+它兼容 OpenAI 的 chat-completions 形状，端点与密钥**只走环境变量**，仓库里没有任何密钥；
+不配端点时它会写出内置示例并打印将要发送的提示词，所以离线也能验证这条链路。
+
 ---
 
 ## 3. 操作说明
@@ -368,7 +422,7 @@ node tools/serve.mjs 8137                       # 终端 A
 node tools/verify.mjs http://127.0.0.1:8137/    # 终端 B
 ```
 
-最近一次结果：**90/90 全部通过**（`reports/verify-report.json`）
+最近一次结果：**107/107 全部通过**（`reports/verify-report.json`）
 
 ```
   PASS  world starts                     [~4.7s]
@@ -440,6 +494,23 @@ node tools/verify.mjs http://127.0.0.1:8137/    # 终端 B
   PASS  look stops when the mouse stops
   PASS  a giant event cannot flip the camera
   PASS  pitch stays clamped
+  PASS  creative palette fills the inventory
+  PASS  creative palette leaves armour slots empty
+  PASS  creative never consumes items
+  PASS  survival still consumes items
+  PASS  creative pick block gives a full stack
+  PASS  dropped items are picked up
+  PASS  mobs face their direction of travel
+  PASS  fishing casts and reels in a catch
+  PASS  shield reduces damage and wears
+  PASS  shield cannot block fall damage
+  PASS  texture pack overrides the named tile
+  PASS  texture pack leaves other faces alone
+  PASS  texture pack can be reset to the built-in art
+  PASS  paste writes the blueprint blocks
+  PASS  capture round-trips size and palette
+  PASS  a captured blueprint can be pasted again
+  PASS  a blueprint can be pasted from a URL
   PASS  mob spawning / mob damage and death
   PASS  player damage / death and respawn
   PASS  day/night cycle
