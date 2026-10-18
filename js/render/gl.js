@@ -2,7 +2,7 @@
 // box-model entities, block outlines and particles.
 import { m4perspective, m4view, m4multiply, m4identity, m4aim, m4rotY, m4rotX, m4rotZ, m4translate, m4scale, frustumFromMatrix, aabbInFrustum } from '../core/math.js';
 import { CX, CZ, WORLD_H } from '../world/chunk.js';
-import { ATLAS_W, ATLAS_H, TILE_PX, LAYER_COUNT, generateAtlasPixels, paintAllTiles } from '../core/atlas.js';
+import { ATLAS_W, ATLAS_H, TILE_PX, LAYER_COUNT, generateAtlasPixels, paintAllTiles, layersForTileKey } from '../core/atlas.js';
 import { VERT_BYTES } from '../world/mesher.js';
 
 // ------------------------------------------------------------------ shaders
@@ -350,6 +350,10 @@ export class Renderer {
       const i = index * layerBytes + (y * TILE_PX + x) * 4;
       pixels[i] = r; pixels[i + 1] = g; pixels[i + 2] = b; pixels[i + 3] = a;
     }, null);
+    // keep the authored pixels around so a texture pack can overwrite individual tiles
+    // and the whole array can be re-uploaded without repainting everything
+    this.atlasPixels = pixels;
+    this.atlasLayerBytes = layerBytes;
     const tex = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D_ARRAY, tex);
     const levels = Math.floor(Math.log2(TILE_PX)) + 1;
@@ -467,6 +471,77 @@ export class Renderer {
       this.stats.uploads++;
       this.stats.bytesUploaded += part.data.byteLength;
     }
+  }
+
+  /**
+   * Swap in a texture pack at runtime.
+   *
+   * A pack is a partial override: it names only the tiles it replaces, everything else
+   * keeps the built-in procedural art. Keys are `block` (all faces) or `block/face` with
+   * face in north, south, west, east, top, bottom.
+   *
+   *   { "name": "Redstone", "tiles": { "stone": "url", "grass/top": "url" } }
+   *
+   * Images are drawn at TILE_PX with smoothing off so pixel art stays crisp, then the
+   * whole texture array is re-uploaded and mipmaps regenerated.
+   */
+  async applyTexturePack(manifest) {
+    const tiles = (manifest && manifest.tiles) || {};
+    const jobs = [];
+    for (const [key, src] of Object.entries(tiles)) {
+      const layers = layersForTileKey(key);
+      if (!layers.length || !src) continue;
+      jobs.push(this._loadTileImage(src).then((img) => {
+        for (const layer of layers) this._blitImageIntoTile(layer, img);
+      }).catch(() => { /* a broken tile just keeps the procedural art */ }));
+    }
+    await Promise.all(jobs);
+    this._reuploadAtlas();
+    this.texturePackName = (manifest && manifest.name) || 'custom';
+    return jobs.length;
+  }
+
+  /** Restore the built-in procedural atlas. */
+  resetTexturePack() {
+    const layerBytes = this.atlasLayerBytes;
+    this.atlasPixels.fill(0);
+    paintAllTiles((index, x, y, r, g, b, a) => {
+      const i = index * layerBytes + (y * TILE_PX + x) * 4;
+      this.atlasPixels[i] = r; this.atlasPixels[i + 1] = g;
+      this.atlasPixels[i + 2] = b; this.atlasPixels[i + 3] = a;
+    }, null);
+    this._reuploadAtlas();
+    this.texturePackName = 'default';
+  }
+
+  _loadTileImage(src) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error('image failed: ' + src));
+      img.src = src;
+    });
+  }
+
+  _blitImageIntoTile(layer, img) {
+    const cv = document.createElement('canvas');
+    cv.width = TILE_PX; cv.height = TILE_PX;
+    const ctx = cv.getContext('2d');
+    ctx.imageSmoothingEnabled = false;
+    // a non-square source is stretched; packs are expected to be square
+    ctx.drawImage(img, 0, 0, TILE_PX, TILE_PX);
+    const data = ctx.getImageData(0, 0, TILE_PX, TILE_PX).data;
+    const base = layer * this.atlasLayerBytes;
+    this.atlasPixels.set(data, base);
+  }
+
+  _reuploadAtlas() {
+    const gl = this.gl;
+    gl.bindTexture(gl.TEXTURE_2D_ARRAY, this.atlasArray);
+    gl.texSubImage3D(gl.TEXTURE_2D_ARRAY, 0, 0, 0, 0, TILE_PX, TILE_PX, LAYER_COUNT,
+      gl.RGBA, gl.UNSIGNED_BYTE, this.atlasPixels);
+    gl.generateMipmap(gl.TEXTURE_2D_ARRAY);
   }
 
   freeChunk(chunk) {

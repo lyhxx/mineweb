@@ -1494,6 +1494,41 @@ export class Game {
     return result;
   }
 
+  // ------------------------------------------------------------------ texture packs
+  /**
+   * Load a texture pack manifest from a URL, or restore the built-in art.
+   *
+   * The manifest only names the tiles it replaces:
+   *   { "name": "Redstone", "tiles": { "stone": "tiles/stone.png",
+   *                                    "grass/top": "tiles/grass_top.png" } }
+   * Relative URLs resolve against the manifest, so a pack can be a folder of PNGs.
+   */
+  async loadTexturePack(url) {
+    if (!url || url === 'off' || url === 'default') {
+      this.renderer.resetTexturePack();
+      this.hud.toast('已恢复默认材质');
+      return true;
+    }
+    try {
+      const res = await fetch(url, { cache: 'no-store' });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const manifest = await res.json();
+      // resolve tile paths relative to the manifest so packs can use relative names
+      const base = new URL(url, location.href);
+      const tiles = manifest.tiles || {};
+      for (const [key, src] of Object.entries(tiles)) {
+        if (typeof src === 'string' && !/^(https?:|data:|blob:|\/)/.test(src)) {
+          tiles[key] = new URL(src, base).href;
+        }
+      }
+      const n = await this.renderer.applyTexturePack({ ...manifest, tiles });
+      this.hud.toast('材质包已加载：' + (manifest.name || url) + '（' + n + ' 张）');
+      return true;
+    } catch (e) {
+      this.hud.toast('材质包加载失败：' + e.message);
+      return false;
+    }
+  }
   /** The Mob class, for tooling that needs to spawn a test mob with an empty world. */
   mobClassForTests() { return Mob; }
 
@@ -2582,7 +2617,10 @@ export class Game {
     const w = this.world;
     switch (cmd) {
       case 'help':
-        this.hud.chatLine('/time set day|night · /tp x y z · /give block [n] · /gamemode creative|survival · /seed · /spawn · /kill · /weather clear|rain · /fps', '#ffff88');
+        this.hud.chatLine('/time set day|night · /tp x y z · /give block [n] · /gamemode creative|survival · /seed · /spawn · /kill · /weather clear|rain · /fps · /pack <url|off>', '#ffff88');
+        break;
+      case 'pack':
+        this.loadTexturePack(args[0]);
         break;
       case 'time': {
         if (args[0] === 'set' && args[1] === 'day') this.dayTime = 0.25;

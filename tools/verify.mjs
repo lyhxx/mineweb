@@ -709,6 +709,39 @@ try {
   check('shield cannot block fall damage', fixes && fixes.fallWhileBlocking === 10,
     `${fixes && fixes.fallWhileBlocking}`);
 
+  // ---- texture packs: a manifest may override single faces and be reverted
+  step('texture pack');
+  const pack = await ev(`(async () => {
+    const g = window.__MINEWEB__;
+    const cv = document.createElement('canvas');
+    cv.width = 16; cv.height = 16;
+    const ctx = cv.getContext('2d');
+    ctx.fillStyle = '#ff00ff';
+    ctx.fillRect(0, 0, 16, 16);
+    const url = cv.toDataURL('image/png');
+    const r = g.renderer;
+    const before = r.atlasPixels.slice();
+    const applied = await r.applyTexturePack({ name: 'probe', tiles: { 'stone/top': url } });
+    // stone is block id 1, top is face index 4, six layers per block
+    const layer = 1 * 6 + 4;
+    const base = layer * 16 * 16 * 4;
+    const px = [r.atlasPixels[base], r.atlasPixels[base + 1], r.atlasPixels[base + 2]];
+    // the north face must not have been touched
+    const otherBase = (1 * 6 + 0) * 16 * 16 * 4;
+    const otherUntouched = before[otherBase] === r.atlasPixels[otherBase]
+      && before[otherBase + 1] === r.atlasPixels[otherBase + 1];
+    r.resetTexturePack();
+    const restored = r.atlasPixels[base] === before[base]
+      && r.atlasPixels[base + 1] === before[base + 1];
+    return { applied, px, otherUntouched, restored, name: r.texturePackName };
+  })()`);
+  report.texturePack = pack;
+  check('texture pack overrides the named tile', pack && pack.applied === 1
+    && pack.px[0] > 240 && pack.px[1] < 15 && pack.px[2] > 240,
+    pack && JSON.stringify(pack.px));
+  check('texture pack leaves other faces alone', pack && pack.otherUntouched === true);
+  check('texture pack can be reset to the built-in art', pack && pack.restored === true);
+
   report.logs = logs.slice(0, 10);
   report.summary = {
     passed: report.checks.filter((c) => c.ok).length,

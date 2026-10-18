@@ -118,13 +118,25 @@ function paintTile(p, d, seed) {
 
   switch (K) {
     case T.SOLID: {
-      const c = rgba(base);
-      p.fill(c[0], c[1], c[2]);
-      // faint grain so flat colours still read as pixel art
-      for (let i = 0; i < 30; i++) {
-        const f = 0.94 + rng() * 0.12;
-        const c2 = rgba(shade(base, f));
-        p.px((rng() * 16) | 0, (rng() * 16) | 0, c2[0], c2[1], c2[2]);
+      // Dirt and sand live here, and this was the crudest painter: flat fill plus thirty
+      // random dots. Two octaves instead — 4x4 clumps for body, per-pixel jitter for
+      // grain, and a few dark specks so it does not read as a gradient.
+      const clump = new Float32Array(16 * 16);
+      for (let y = 0; y < 16; y++) {
+        for (let x = 0; x < 16; x++) {
+          const cx = Math.floor(x / 4), cy = Math.floor(y / 4);
+          clump[y * 16 + x] = 0.94 + (((cx * 13 + cy * 5 + seed) % 6) / 6) * 0.12;
+        }
+      }
+      for (let y = 0; y < 16; y++) {
+        for (let x = 0; x < 16; x++) {
+          const k = y * 16 + x;
+          let f = clump[k] * (0.97 + rng() * 0.06);
+          if (rng() < 0.06) f *= 0.90;         // sparse darker grit
+          else if (rng() < 0.05) f *= 1.06;    // and a few bright grains
+          const c = rgba(shade(base, f));
+          p.px(x, y, c[0], c[1], c[2]);
+        }
       }
       break;
     }
@@ -134,9 +146,18 @@ function paintTile(p, d, seed) {
     case T.SNOW:
     case T.BEDROCK: {
       const spread = K === T.GRAVEL ? 0.30 : K === T.BEDROCK ? 0.55 : 0.16;
+      // low-frequency clumps under the per-pixel noise: stone should have patches of
+      // lighter and darker rock, not uniform static
+      const clump = new Float32Array(16 * 16);
       for (let y = 0; y < 16; y++) {
         for (let x = 0; x < 16; x++) {
-          let f = 1 + (rng() - 0.5) * spread * 2;
+          const cx = Math.floor(x / 4), cy = Math.floor(y / 4);
+          clump[y * 16 + x] = 0.94 + (((cx * 17 + cy * 11 + seed) % 5) / 5) * 0.14;
+        }
+      }
+      for (let y = 0; y < 16; y++) {
+        for (let x = 0; x < 16; x++) {
+          let f = (1 + (rng() - 0.5) * spread * 2) * (K === T.BEDROCK ? 1 : clump[y * 16 + x]);
           if (K === T.BEDROCK) f = rng() < 0.5 ? 0.35 + rng() * 0.25 : 0.55 + rng() * 0.4;
           const c = rgba(shade(base, f));
           p.px(x, y, c[0], c[1], c[2]);
@@ -1397,4 +1418,36 @@ export function generateAtlasPixels() {
 export function tileUV(_tileIndex) {
   const inset = 0.5 / TILE_PX;
   return [inset, inset, 1 - inset * 2, 1 - inset * 2];
+}
+
+// ---------------------------------------------------------------- texture packs
+/** Face order matches the mesher's FACE_NORMAL: north(-Z), south(+Z), west(-X), east(+X), top, bottom. */
+export const FACE_NAMES = ['north', 'south', 'west', 'east', 'top', 'bottom'];
+
+/**
+ * Resolve a texture-pack key to texture-array layers.
+ *
+ *   "stone"        -> every face of that block
+ *   "stone/top"    -> just the top face
+ *   "stone/north"  -> just the -Z face
+ *
+ * Returns an array of layer indices (empty when the block or face is unknown), which is
+ * what a pack uses to overwrite individual tiles without having to provide all of them.
+ */
+export function layersForTileKey(key) {
+  if (typeof key !== 'string' || !key) return [];
+  const slash = key.indexOf('/');
+  const blockKey = slash === -1 ? key : key.slice(0, slash);
+  const faceName = slash === -1 ? null : key.slice(slash + 1).toLowerCase();
+  let id = -1;
+  for (let i = 1; i < BLOCKS.length; i++) if (BLOCKS[i] && BLOCKS[i].key === blockKey) { id = i; break; }
+  if (id < 0) return [];
+  if (faceName === null) {
+    const out = [];
+    for (let f = 0; f < ATLAS_SLOTS; f++) out.push(id * ATLAS_SLOTS + f);
+    return out;
+  }
+  const face = FACE_NAMES.indexOf(faceName);
+  if (face < 0) return [];
+  return [id * ATLAS_SLOTS + face];
 }

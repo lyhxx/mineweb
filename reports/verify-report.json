@@ -3,7 +3,7 @@
     {
       "name": "world starts",
       "ok": true,
-      "detail": "4899ms"
+      "detail": "1387ms"
     },
     {
       "name": "terrain generated",
@@ -348,12 +348,12 @@
     {
       "name": "torch emits light",
       "ok": true,
-      "detail": "{\"placed\":true,\"queued\":6,\"lit\":true,\"atTorch\":14,\"twoAway\":12,\"torchBlock\":30}"
+      "detail": "{\"placed\":true,\"queued\":8,\"lit\":true,\"atTorch\":14,\"twoAway\":12,\"torchBlock\":30}"
     },
     {
       "name": "walking and chunk streaming",
       "ok": true,
-      "detail": "{\"moved\":87.14,\"startY\":77,\"endY\":77,\"speed\":10.9,\"chunks\":391,\"meshQueue\":0,\"mode\":\"playing\",\"simMsPerFrame\":1.236}"
+      "detail": "{\"moved\":87.14,\"startY\":77,\"endY\":77,\"speed\":10.9,\"chunks\":374,\"meshQueue\":0,\"mode\":\"playing\",\"simMsPerFrame\":1.201}"
     },
     {
       "name": "chat commands",
@@ -386,12 +386,12 @@
     {
       "name": "simulation step is cheap (<4ms)",
       "ok": true,
-      "detail": "0.519ms/frame (ceiling 1926 fps)"
+      "detail": "0.104ms/frame (ceiling 9646 fps)"
     },
     {
       "name": "average fps >= 60",
       "ok": true,
-      "detail": "120.0 fps"
+      "detail": "119.8 fps"
     },
     {
       "name": "1% low fps >= 60",
@@ -406,7 +406,7 @@
     {
       "name": "mesh vertex count matches 6 per quad",
       "ok": true,
-      "detail": "0 bad of 100 chunks"
+      "detail": "0 bad of 90 chunks"
     },
     {
       "name": "frame is bright enough to be a lit scene",
@@ -467,7 +467,7 @@
     {
       "name": "mobs face their direction of travel",
       "ok": true,
-      "detail": "yaw -1.48 @ 1.70"
+      "detail": "yaw -1.86 @ 0.94"
     },
     {
       "name": "fishing casts and reels in a catch",
@@ -483,9 +483,22 @@
       "name": "shield cannot block fall damage",
       "ok": true,
       "detail": "10"
+    },
+    {
+      "name": "texture pack overrides the named tile",
+      "ok": true,
+      "detail": "[255,0,255]"
+    },
+    {
+      "name": "texture pack leaves other faces alone",
+      "ok": true
+    },
+    {
+      "name": "texture pack can be reset to the built-in art",
+      "ok": true
     }
   ],
-  "loadMs": 4899,
+  "loadMs": 1387,
   "world": {
     "seed": 1919358098,
     "chunks": 289,
@@ -965,26 +978,26 @@
     "debug": true
   },
   "simPerformance": {
-    "simMsPerFrame": 0.519,
+    "simMsPerFrame": 0.104,
     "frames": 300,
-    "maxSimFps": 1926
+    "maxSimFps": 9646
   },
   "performance": {
-    "frames": 601,
-    "avgFps": 120.00079867420084,
+    "frames": 600,
+    "avgFps": 119.80113012399414,
     "p99FrameMs": 8.5,
     "fps1pctLow": 117.6470588235294,
     "medianFps": 120.48192771082753,
-    "draws": 22,
-    "quads": 7322,
-    "viewDistance": 7
+    "draws": 18,
+    "quads": 8760,
+    "viewDistance": 8
   },
   "visual": {
     "blackRatio": 0,
     "avgBrightness": 213,
-    "slots": 100,
+    "slots": 90,
     "badSlots": 0,
-    "draws": 24
+    "draws": 18
   },
   "mouseLook": {
     "sens": 0.0022,
@@ -1001,8 +1014,8 @@
     "pickCount": 64,
     "survivalCountAfter": 4,
     "pickupGained": 4,
-    "mobSpeed": 1.704389818292258,
-    "mobYaw": -1.4782737148110927,
+    "mobSpeed": 0.9371339012338789,
+    "mobYaw": -1.8642316068940712,
     "mobHeadingOk": true,
     "bobberCast": true,
     "bobberAfterReel": false,
@@ -1012,12 +1025,23 @@
     "unshieldedHealth": 10,
     "fallWhileBlocking": 10
   },
+  "texturePack": {
+    "applied": 1,
+    "px": [
+      255,
+      0,
+      255
+    ],
+    "otherUntouched": true,
+    "restored": true,
+    "name": "default"
+  },
   "logs": [
     "Failed to load resource: the server responded with a status of 404 (Not Found)"
   ],
   "summary": {
-    "passed": 100,
+    "passed": 103,
     "failed": 0,
-    "total": 100
+    "total": 103
   }
 }
