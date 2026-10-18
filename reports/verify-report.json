@@ -3,7 +3,7 @@
     {
       "name": "world starts",
       "ok": true,
-      "detail": "1389ms"
+      "detail": "4899ms"
     },
     {
       "name": "terrain generated",
@@ -348,12 +348,12 @@
     {
       "name": "torch emits light",
       "ok": true,
-      "detail": "{\"placed\":true,\"queued\":8,\"lit\":true,\"atTorch\":14,\"twoAway\":12,\"torchBlock\":30}"
+      "detail": "{\"placed\":true,\"queued\":6,\"lit\":true,\"atTorch\":14,\"twoAway\":12,\"torchBlock\":30}"
     },
     {
       "name": "walking and chunk streaming",
       "ok": true,
-      "detail": "{\"moved\":87.14,\"startY\":77,\"endY\":77,\"speed\":10.9,\"chunks\":374,\"meshQueue\":0,\"mode\":\"playing\",\"simMsPerFrame\":1.393}"
+      "detail": "{\"moved\":87.14,\"startY\":77,\"endY\":77,\"speed\":10.9,\"chunks\":391,\"meshQueue\":0,\"mode\":\"playing\",\"simMsPerFrame\":1.236}"
     },
     {
       "name": "chat commands",
@@ -386,12 +386,12 @@
     {
       "name": "simulation step is cheap (<4ms)",
       "ok": true,
-      "detail": "0.281ms/frame (ceiling 3555 fps)"
+      "detail": "0.519ms/frame (ceiling 1926 fps)"
     },
     {
       "name": "average fps >= 60",
       "ok": true,
-      "detail": "119.8 fps"
+      "detail": "120.0 fps"
     },
     {
       "name": "1% low fps >= 60",
@@ -406,7 +406,7 @@
     {
       "name": "mesh vertex count matches 6 per quad",
       "ok": true,
-      "detail": "0 bad of 95 chunks"
+      "detail": "0 bad of 100 chunks"
     },
     {
       "name": "frame is bright enough to be a lit scene",
@@ -467,7 +467,7 @@
     {
       "name": "mobs face their direction of travel",
       "ok": true,
-      "detail": "yaw -1.57 @ 1.27"
+      "detail": "yaw -1.48 @ 1.70"
     },
     {
       "name": "fishing casts and reels in a catch",
@@ -485,7 +485,7 @@
       "detail": "10"
     }
   ],
-  "loadMs": 1389,
+  "loadMs": 4899,
   "world": {
     "seed": 1919358098,
     "chunks": 289,
@@ -965,26 +965,26 @@
     "debug": true
   },
   "simPerformance": {
-    "simMsPerFrame": 0.281,
+    "simMsPerFrame": 0.519,
     "frames": 300,
-    "maxSimFps": 3555
+    "maxSimFps": 1926
   },
   "performance": {
-    "frames": 600,
-    "avgFps": 119.80352222355336,
+    "frames": 601,
+    "avgFps": 120.00079867420084,
     "p99FrameMs": 8.5,
     "fps1pctLow": 117.6470588235294,
     "medianFps": 120.48192771082753,
-    "draws": 29,
-    "quads": 16251,
+    "draws": 22,
+    "quads": 7322,
     "viewDistance": 7
   },
   "visual": {
     "blackRatio": 0,
     "avgBrightness": 213,
-    "slots": 95,
+    "slots": 100,
     "badSlots": 0,
-    "draws": 29
+    "draws": 24
   },
   "mouseLook": {
     "sens": 0.0022,
@@ -1001,8 +1001,8 @@
     "pickCount": 64,
     "survivalCountAfter": 4,
     "pickupGained": 4,
-    "mobSpeed": 1.2666666666666666,
-    "mobYaw": -1.5707963267948966,
+    "mobSpeed": 1.704389818292258,
+    "mobYaw": -1.4782737148110927,
     "mobHeadingOk": true,
     "bobberCast": true,
     "bobberAfterReel": false,

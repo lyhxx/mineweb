@@ -361,6 +361,18 @@ export class Renderer {
     gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    // Anisotropic filtering keeps ground textures from smearing into mush at grazing
+    // angles. A 16px tile magnified across a receding plain needs the extra samples;
+    // without it distant terrain shimmers and reads as noise.
+    const aniso = gl.getExtension('EXT_texture_filter_anisotropic')
+      || gl.getExtension('WEBKIT_EXT_texture_filter_anisotropic');
+    if (aniso) {
+      const max = gl.getParameter(aniso.MAX_TEXTURE_MAX_ANISOTROPY_EXT);
+      this.maxAnisotropy = Math.min(8, max);
+      gl.texParameterf(gl.TEXTURE_2D_ARRAY, aniso.TEXTURE_MAX_ANISOTROPY_EXT, this.maxAnisotropy);
+    } else {
+      this.maxAnisotropy = 1;
+    }
     this.atlasArray = tex;
     return tex;
   }

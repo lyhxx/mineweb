@@ -41,6 +41,70 @@ class TilePainter {
   clear() { this.fill(0, 0, 0, 0); }
 }
 
+/**
+ * Post-process an authored tile so it reads as designed pixel art instead of white noise.
+ *
+ * The procedural painters scatter independent random values per pixel, which looks like
+ * television static up close and shimmers in the distance. Real pixel art has *clusters*
+ * of similar tone. Three cheap passes fix that without touching the 90-odd painters:
+ *
+ *   1. de-speckle — a pixel that is far from its 4-neighbour mean gets pulled toward it,
+ *      so isolated bright/dark dots collapse into their surroundings
+ *   2. contrast   — a small S-curve around mid grey to restore punch after smoothing
+ *
+ * There is deliberately no per-tile lighting ramp: the same tile repeats across a flat
+ * plain, so a vertical gradient inside one tile turns into visible stripes.
+ *
+ * Tiles with transparency (plants, torches, glass, liquids) and cut-out foliage are left
+ * alone: their shape is authored on purpose, and boosting contrast there turns leaf gaps
+ * into camo blobs.
+ */
+const NO_REFINE = new Set([
+  T.LEAVES, T.PLANT, T.FLOWER, T.SAPLING, T.TORCH_TEX, T.GLASS, T.GLASS_PANE,
+  T.WATER, T.LAVA, T.ICE, T.CIRCUIT, T.PORTAL,
+]);
+
+function refineTile(buf, kind) {
+  if (kind !== undefined && NO_REFINE.has(kind)) return;
+  const N = TILE_PX, N4 = N * N * 4;
+  for (let i = 3; i < N4; i += 4) if (buf[i] < 250) return;   // has cut-outs: keep as authored
+
+  const lum = new Float32Array(N * N);
+  for (let i = 0, k = 0; k < N * N; i += 4, k++) {
+    lum[k] = (buf[i] * 0.299 + buf[i + 1] * 0.587 + buf[i + 2] * 0.114) / 255;
+  }
+
+  // 1. de-speckle against the 4-neighbourhood
+  const out = new Float32Array(lum);
+  for (let y = 0; y < N; y++) {
+    for (let x = 0; x < N; x++) {
+      const k = y * N + x;
+      let sum = 0, n = 0;
+      if (x > 0) { sum += lum[k - 1]; n++; }
+      if (x < N - 1) { sum += lum[k + 1]; n++; }
+      if (y > 0) { sum += lum[k - N]; n++; }
+      if (y < N - 1) { sum += lum[k + N]; n++; }
+      if (!n) continue;
+      const mean = sum / n;
+      const d = lum[k] - mean;
+      // only correct pixels that are clearly out of family; edges survive untouched
+      if (Math.abs(d) > 0.055) out[k] = lum[k] - d * 0.72;
+    }
+  }
+
+  // 2. contrast, then write back scaled
+  for (let k = 0; k < N * N; k++) {
+    let v = out[k];
+    v = 0.5 + (v - 0.5) * 1.07;
+    v = clamp(v, 0, 1);
+    const scale = lum[k] > 1e-4 ? v / lum[k] : 1;
+    const i = k * 4;
+    buf[i] = clamp(Math.round(buf[i] * scale), 0, 255);
+    buf[i + 1] = clamp(Math.round(buf[i + 1] * scale), 0, 255);
+    buf[i + 2] = clamp(Math.round(buf[i + 2] * scale), 0, 255);
+  }
+}
+
 function rgba(c, a = 255) { return [Math.round(c[0] * 255), Math.round(c[1] * 255), Math.round(c[2] * 255), a]; }
 
 /**
@@ -96,16 +160,24 @@ function paintTile(p, d, seed) {
       break;
     }
     case T.GRASS_TOP: {
+      // Two scales of variation: 4x4 clumps give a mown-lawn look, and a light per-pixel
+      // jitter stops it looking like flat paint. Pure per-pixel noise read as static.
+      const g0 = [0.42, 0.70, 0.26];
+      const clump = new Float32Array(16 * 16);
       for (let y = 0; y < 16; y++) {
         for (let x = 0; x < 16; x++) {
-          const f = 0.82 + rng() * 0.36;
-          const c = rgba(shade([0.42, 0.70, 0.26], f));
-          p.px(x, y, c[0], c[1], c[2]);
+          const cx = Math.floor(x / 4), cy = Math.floor(y / 4);
+          clump[y * 16 + x] = 0.90 + (((cx * 11 + cy * 7 + seed) % 7) / 7) * 0.20;
         }
       }
-      for (let i = 0; i < 26; i++) {
-        const c = rgba(shade([0.36, 0.62, 0.22], 0.8 + rng() * 0.5));
-        p.px((rng() * 16) | 0, (rng() * 16) | 0, c[0], c[1], c[2]);
+      for (let y = 0; y < 16; y++) {
+        for (let x = 0; x < 16; x++) {
+          const k = y * 16 + x;
+          let f = clump[k] * (0.95 + rng() * 0.10);
+          if (rng() < 0.07) f *= 0.82;   // a few darker blades for direction
+          const c = rgba(shade(g0, f));
+          p.px(x, y, c[0], c[1], c[2]);
+        }
       }
       break;
     }
@@ -250,18 +322,38 @@ function paintTile(p, d, seed) {
       break;
     }
     case T.LEAVES: {
-      const g = [0.32, 0.62, 0.24];
+      // NOTE: the chunk shader takes one tint for the whole batch, so a block's `tint`
+      // field cannot colour individual blocks — every texture must be painted in its
+      // final colour. (Painting leaves in luminance only turned the canopy white.)
+      // Gaps are clustered 2x2 blocks rather than single pixels: with mipmapping,
+      // salt-and-pepper holes average out and alpha-test then eats ragged regions.
+      const green = [0.34, 0.62, 0.26];
+      const lvl = new Float32Array(16 * 16);
+      const hole = new Uint8Array(16 * 16);
       for (let y = 0; y < 16; y++) {
         for (let x = 0; x < 16; x++) {
-          if (rng() < 0.16) { p.px(x, y, 0, 0, 0, 0); continue; }   // holes -> alpha test
-          const f = 0.72 + rng() * 0.6;
-          const c = rgba(shade(g, f));
-          p.px(x, y, c[0], c[1], c[2]);
+          const cx = Math.floor(x / 4), cy = Math.floor(y / 4);
+          const clump = ((cx * 7 + cy * 13 + seed) % 5) / 5;
+          lvl[y * 16 + x] = 0.80 + clump * 0.30 + (rng() - 0.5) * 0.20;
         }
       }
-      for (let i = 0; i < 24; i++) {
-        const c = rgba(shade(g, 0.55 + rng() * 0.3));
-        p.px((rng() * 16) | 0, (rng() * 16) | 0, c[0], c[1], c[2]);
+      for (let gy = 0; gy < 8; gy++) {
+        for (let gx = 0; gx < 8; gx++) {
+          if (rng() > 0.025) continue;
+          const x = gx * 2, y = gy * 2;
+          for (let dy = 0; dy < 2; dy++) for (let dx = 0; dx < 2; dx++) hole[(y + dy) * 16 + (x + dx)] = 1;
+        }
+      }
+      for (let y = 0; y < 16; y++) {
+        for (let x = 0; x < 16; x++) {
+          const k = y * 16 + x;
+          if (hole[k]) { p.px(x, y, 0, 0, 0, 0); continue; }
+          // leaves are darker in the crevices: a little extra shade near holes
+          let f = lvl[k];
+          if ((x > 0 && hole[k - 1]) || (x < 15 && hole[k + 1]) || (y > 0 && hole[k - 16]) || (y < 15 && hole[k + 16])) f *= 0.78;
+          const c = rgba(shade(green, f));
+          p.px(x, y, c[0], c[1], c[2]);
+        }
       }
       break;
     }
@@ -1259,6 +1351,7 @@ export function paintAllTiles(layerPixel, blitToAtlas) {
       const p = new TilePainter(scratch, 0, 0);
       const desc = b.tex[Math.min(face, b.tex.length - 1)] || b.tex[0];
       paintTile(p, desc, (id * 7919 + face * 104729 + 12345) | 0);
+      refineTile(scratch, desc.kind);
       const mirror = !!desc.mirror && face < 4;
       const flipY = !!desc.flipY;
       if (layerPixel) {
