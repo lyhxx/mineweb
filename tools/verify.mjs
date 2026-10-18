@@ -580,6 +580,135 @@ try {
   check('pitch stays clamped', look
     && Math.abs(look.pitchLimit) <= Math.PI / 2 + 0.01);
 
+  // ---- M1: creative mode, pickups, mob heading, fishing, shield
+  step('sandbox fixes');
+  const fixes = await ev(`(() => {
+    const g = window.__MINEWEB__;
+    const p = g.player;
+    const inv = p.inventory;
+    const out = {};
+    const wasCreative = inv.creative;
+    const savedSlots = inv.slots.map((s) => s);
+    const savedSel = inv.selected;
+    const savedHealth = p.health;
+    const savedDead = p.dead;
+    // build real ItemStacks; plain objects lack enchLevel() and friends
+    const hold = (id, count, dur) => {
+      inv.slots.fill(null); inv.selected = 0; inv.add(id, count);
+      const s = inv.slots[0];
+      if (s && dur != null) s.durability = dur;
+      return s;
+    };
+
+    // ---- creative palette + no consumption
+    inv.creative = true;
+    inv.slots.fill(null);
+    inv.giveCreativePalette();
+    out.paletteFilled = inv.slots.filter(Boolean).length;
+    out.paletteBlocks = new Set(inv.slots.filter(Boolean).map((s) => s.id)).size;
+    // the four armour slots must stay empty
+    out.armourSlotsUsed = inv.slots.slice(33).filter(Boolean).length;
+    hold(1, 64);
+    inv.consumeHeld(); inv.consumeHeld(); inv.consumeHeld();
+    out.creativeCountAfter = inv.slots[0].count;
+    // creative pick block hands over a full stack
+    const realRay = g.raycastHit;
+    g.raycastHit = () => ({ id: 3, x: 0, y: 0, z: 0 });
+    inv.slots[0] = null; inv.selected = 0;
+    g.pickBlock();
+    out.pickCount = inv.slots[0] ? inv.slots[0].count : 0;
+    g.raycastHit = realRay;
+    // survival does consume
+    inv.creative = false;
+    hold(1, 5);
+    inv.consumeHeld();
+    out.survivalCountAfter = inv.slots[0] ? inv.slots[0].count : -1;
+
+    // ---- dropped items are picked up (the magnet brings them in from ~3 blocks)
+    inv.slots.fill(null);
+    p.dead = false;
+    p.health = 20;
+    const drop = g.itemEntityForTests(1, 4, p.x + 2.4, p.y + 0.5, p.z);
+    drop.pickupDelay = 0;
+    g.items.push(drop);
+    const before = inv.count(1);
+    for (let i = 0; i < 90; i++) g.stepFrame(1 / 60);
+    out.pickupGained = inv.count(1) - before;
+    g.items.length = 0;
+
+    // ---- mobs face the way they walk (model front is local -Z)
+    const Mob = g.mobClassForTests();
+    const sheep = new Mob('sheep', p.x + 6, p.y, p.z);
+    g.mobs.push(sheep);
+    // re-inject velocity every frame: the wandering AI would otherwise decelerate to a
+    // standstill and the check would trivially pass through the idle branch
+    for (let i = 0; i < 20; i++) { sheep.vx = 2; sheep.vz = 0; sheep.update(1 / 60, g.world, p, g.mobApi()); }
+    out.mobSpeed = Math.hypot(sheep.vx, sheep.vz);
+    out.mobYaw = sheep.yaw;
+    const expectYaw = Math.atan2(-sheep.vx, -sheep.vz);
+    // the facing must be the direction of travel, and must actually be moving
+    out.mobHeadingOk = out.mobSpeed > 0.35 && Math.abs(((sheep.yaw - expectYaw + Math.PI * 3) % (Math.PI * 2)) - Math.PI) < 0.05;
+    g.mobs = g.mobs.filter((m) => m !== sheep);
+
+    // ---- fishing: cast, force a bite, reel in a catch
+    const rodId = g.resolveKeyForTests('fishing_rod');
+    hold(rodId, 1, 64);
+    g.bobber = null;
+    g.useFishingRod();
+    out.bobberCast = !!g.bobber;
+    if (g.bobber) g.bobber.state = 'biting';
+    const invBefore = inv.slots.filter(Boolean).reduce((n, s) => n + s.count, 0);
+    g.reelFishing();
+    out.bobberAfterReel = !!g.bobber;
+    out.fishingGained = inv.slots.filter(Boolean).reduce((n, s) => n + s.count, 0) - invBefore;
+
+    // ---- shield absorbs most of a physical hit and wears out
+    const shieldId = g.resolveKeyForTests('shield_item');
+    hold(shieldId, 1, 336);
+    p.health = 20; p.blocking = true;
+    p.damage(10, 'mob');
+    out.shieldedHealth = p.health;
+    out.shieldDurability = inv.slots[0] ? inv.slots[0].durability : 'broken';
+    p.health = 20; p.blocking = false;
+    p.damage(10, 'mob');
+    out.unshieldedHealth = p.health;
+    // fall damage is environmental and must not be blockable
+    p.health = 20; p.blocking = true;
+    p.damage(10, 'fall');
+    out.fallWhileBlocking = p.health;
+
+    // restore
+    inv.creative = wasCreative;
+    inv.slots = savedSlots;
+    inv.selected = savedSel;
+    p.health = savedHealth;
+    p.dead = savedDead;
+    p.blocking = false;
+    return out;
+  })()`);
+  report.fixes = fixes;
+  check('creative palette fills the inventory', fixes
+    && fixes.paletteFilled >= 25 && fixes.paletteBlocks >= 25,
+    `${fixes && fixes.paletteFilled} slots / ${fixes && fixes.paletteBlocks} blocks`);
+  check('creative palette leaves armour slots empty', fixes && fixes.armourSlotsUsed === 0,
+    `${fixes && fixes.armourSlotsUsed}`);
+  check('creative never consumes items', fixes && fixes.creativeCountAfter === 64,
+    `${fixes && fixes.creativeCountAfter}`);
+  check('survival still consumes items', fixes && fixes.survivalCountAfter === 4);
+  check('creative pick block gives a full stack', fixes && fixes.pickCount === 64);
+  check('dropped items are picked up', fixes && fixes.pickupGained === 4,
+    `gained ${fixes && fixes.pickupGained}`);
+  check('mobs face their direction of travel', fixes && fixes.mobHeadingOk === true,
+    `yaw ${fixes && fixes.mobYaw && fixes.mobYaw.toFixed(2)} @ ${fixes && fixes.mobSpeed && fixes.mobSpeed.toFixed(2)}`);
+  check('fishing casts and reels in a catch', fixes
+    && fixes.bobberCast === true && fixes.bobberAfterReel === false && fixes.fishingGained > 0,
+    JSON.stringify({ cast: fixes && fixes.bobberCast, gained: fixes && fixes.fishingGained }));
+  check('shield reduces damage and wears', fixes
+    && fixes.shieldedHealth > fixes.unshieldedHealth && fixes.shieldDurability < 336,
+    `shielded ${fixes && fixes.shieldedHealth} vs ${fixes && fixes.unshieldedHealth}`);
+  check('shield cannot block fall damage', fixes && fixes.fallWhileBlocking === 10,
+    `${fixes && fixes.fallWhileBlocking}`);
+
   report.logs = logs.slice(0, 10);
   report.summary = {
     passed: report.checks.filter((c) => c.ok).length,

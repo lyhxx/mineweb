@@ -216,7 +216,8 @@ export class Mob {
         this.vy += ((wanted - this.y) * 0.9 - this.vy) * k;
       }
       this.x += this.vx * dt; this.y += this.vy * dt; this.z += this.vz * dt;
-      this.yaw = Math.atan2(this.vx, -this.vz);
+      // the dragon's head is also on local -Z, so the same convention as other mobs
+      if (Math.hypot(this.vx, this.vz) > 0.5) this.yaw = Math.atan2(-this.vx, -this.vz);
       this.onGround = false;
       // contact damage
       if (distToPlayer < 3.4 && this.attackCooldown <= 0) {
@@ -233,6 +234,11 @@ export class Mob {
     const accel = this.onGround ? 22 : 8;
     this.vx += (targetVX - this.vx) * Math.min(1, accel * dt);
     this.vz += (targetVZ - this.vz) * Math.min(1, accel * dt);
+    // Face the direction of travel. Only update while actually moving, so an idle mob
+    // keeps looking where it last went instead of snapping around. The model's front is
+    // local -Z, and m4aim maps local +Z to (sin yaw, cos yaw), hence the negated atan2.
+    const horiz = Math.hypot(this.vx, this.vz);
+    if (horiz > 0.35) this.yaw = Math.atan2(-this.vx, -this.vz);
 
     const hw = this.width / 2;
     const inWater = LIQUID[baseId(world.getBlockRaw(Math.floor(this.x), Math.floor(this.y + 0.2), Math.floor(this.z)))] === 1;
@@ -471,6 +477,17 @@ export class ItemEntity {
     // magnet + pickup
     const dx = player.x - this.x, dy = (player.y + 0.9) - this.y, dz = player.z - this.z;
     const dist = Math.hypot(dx, dy, dz);
+    // Drift toward the player before the pickup radius is reached, so walking over a
+    // drop always collects it. This steers the velocity toward a target speed instead of
+    // adding impulses: an impulse gets cancelled by the ground friction applied above,
+    // which left items crawling toward the player at a fraction of a block per second.
+    if (this.pickupDelay <= 0 && !player.dead && dist > 0.05 && dist < 3.4) {
+      const speed = 1.6 + (1 - dist / 3.4) * 6.4;
+      const k = Math.min(1, 18 * dt);
+      this.vx += ((dx / dist) * speed - this.vx) * k;
+      this.vz += ((dz / dist) * speed - this.vz) * k;
+      if (dy > 0.2) this.vy += ((dy / dist) * speed - this.vy) * k * 0.5;
+    }
     if (dist < 1.6 && this.pickupDelay <= 0 && !player.dead) {
       const left = player.inventory.add(this.id, this.count);
       if (left < this.count && api && api.pickupSound) api.pickupSound();

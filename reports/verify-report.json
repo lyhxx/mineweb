@@ -3,7 +3,7 @@
     {
       "name": "world starts",
       "ok": true,
-      "detail": "1290ms"
+      "detail": "1389ms"
     },
     {
       "name": "terrain generated",
@@ -353,7 +353,7 @@
     {
       "name": "walking and chunk streaming",
       "ok": true,
-      "detail": "{\"moved\":87.14,\"startY\":77,\"endY\":77,\"speed\":10.9,\"chunks\":374,\"meshQueue\":0,\"mode\":\"playing\",\"simMsPerFrame\":0.926}"
+      "detail": "{\"moved\":87.14,\"startY\":77,\"endY\":77,\"speed\":10.9,\"chunks\":374,\"meshQueue\":0,\"mode\":\"playing\",\"simMsPerFrame\":1.393}"
     },
     {
       "name": "chat commands",
@@ -386,12 +386,12 @@
     {
       "name": "simulation step is cheap (<4ms)",
       "ok": true,
-      "detail": "0.857ms/frame (ceiling 1166 fps)"
+      "detail": "0.281ms/frame (ceiling 3555 fps)"
     },
     {
       "name": "average fps >= 60",
       "ok": true,
-      "detail": "118.8 fps"
+      "detail": "119.8 fps"
     },
     {
       "name": "1% low fps >= 60",
@@ -406,7 +406,7 @@
     {
       "name": "mesh vertex count matches 6 per quad",
       "ok": true,
-      "detail": "0 bad of 101 chunks"
+      "detail": "0 bad of 95 chunks"
     },
     {
       "name": "frame is bright enough to be a lit scene",
@@ -435,9 +435,57 @@
     {
       "name": "pitch stays clamped",
       "ok": true
+    },
+    {
+      "name": "creative palette fills the inventory",
+      "ok": true,
+      "detail": "33 slots / 33 blocks"
+    },
+    {
+      "name": "creative palette leaves armour slots empty",
+      "ok": true,
+      "detail": "0"
+    },
+    {
+      "name": "creative never consumes items",
+      "ok": true,
+      "detail": "64"
+    },
+    {
+      "name": "survival still consumes items",
+      "ok": true
+    },
+    {
+      "name": "creative pick block gives a full stack",
+      "ok": true
+    },
+    {
+      "name": "dropped items are picked up",
+      "ok": true,
+      "detail": "gained 4"
+    },
+    {
+      "name": "mobs face their direction of travel",
+      "ok": true,
+      "detail": "yaw -1.57 @ 1.27"
+    },
+    {
+      "name": "fishing casts and reels in a catch",
+      "ok": true,
+      "detail": "{\"cast\":true,\"gained\":1}"
+    },
+    {
+      "name": "shield reduces damage and wears",
+      "ok": true,
+      "detail": "shielded 17.5 vs 10"
+    },
+    {
+      "name": "shield cannot block fall damage",
+      "ok": true,
+      "detail": "10"
     }
   ],
-  "loadMs": 1290,
+  "loadMs": 1389,
   "world": {
     "seed": 1919358098,
     "chunks": 289,
@@ -450,8 +498,8 @@
   "crafting": {
     "itemCount": 107,
     "toolCount": 20,
-    "recipeCount": 87,
-    "smeltCount": 8,
+    "recipeCount": 89,
+    "smeltCount": 10,
     "grid2": {
       "recipe": "planks",
       "out": [
@@ -917,26 +965,26 @@
     "debug": true
   },
   "simPerformance": {
-    "simMsPerFrame": 0.857,
+    "simMsPerFrame": 0.281,
     "frames": 300,
-    "maxSimFps": 1166
+    "maxSimFps": 3555
   },
   "performance": {
-    "frames": 595,
-    "avgFps": 118.80278737296089,
+    "frames": 600,
+    "avgFps": 119.80352222355336,
     "p99FrameMs": 8.5,
     "fps1pctLow": 117.6470588235294,
     "medianFps": 120.48192771082753,
-    "draws": 31,
-    "quads": 14109,
-    "viewDistance": 8
+    "draws": 29,
+    "quads": 16251,
+    "viewDistance": 7
   },
   "visual": {
     "blackRatio": 0,
     "avgBrightness": 213,
-    "slots": 101,
+    "slots": 95,
     "badSlots": 0,
-    "draws": 31
+    "draws": 29
   },
   "mouseLook": {
     "sens": 0.0022,
@@ -945,12 +993,31 @@
     "pitchAfterGiant": -0.55,
     "pitchLimit": 1.5697963267948967
   },
+  "fixes": {
+    "paletteFilled": 33,
+    "paletteBlocks": 33,
+    "armourSlotsUsed": 0,
+    "creativeCountAfter": 64,
+    "pickCount": 64,
+    "survivalCountAfter": 4,
+    "pickupGained": 4,
+    "mobSpeed": 1.2666666666666666,
+    "mobYaw": -1.5707963267948966,
+    "mobHeadingOk": true,
+    "bobberCast": true,
+    "bobberAfterReel": false,
+    "fishingGained": 1,
+    "shieldedHealth": 17.5,
+    "shieldDurability": 335,
+    "unshieldedHealth": 10,
+    "fallWhileBlocking": 10
+  },
   "logs": [
     "Failed to load resource: the server responded with a status of 404 (Not Found)"
   ],
   "summary": {
-    "passed": 90,
+    "passed": 100,
     "failed": 0,
-    "total": 90
+    "total": 100
   }
 }

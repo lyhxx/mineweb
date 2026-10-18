@@ -13,6 +13,7 @@ import { rollOffers, enchantLabel, enchantFamilies, eligibleEnchants, protection
 import { rollVillager, resolveOffer, bindTradeResolver } from '../core/trades.js';
 import { makeRng } from '../core/math.js';
 import { EFFECTS, DURATION, EffectTracker, parsePotionKey, brewResult } from '../core/potions.js';
+import { Bobber, rollCatch } from '../core/fishing.js';
 import { maxPowerAt, lastRecomputeSources, powerAt } from '../world/redstone.js';
 import { Input } from './input.js';
 import { Audio } from './audio.js';
@@ -87,6 +88,7 @@ export class Game {
     this.bowCharging = false;
     this.bowCharge = 0;
     this.chestPos = null;
+    this.bobber = null;
     this.mining = null;
     this.miningProgress = 0;
     this.miningSoundTimer = 0;
@@ -221,6 +223,7 @@ export class Game {
     this.bowCharging = false;
     this.bowCharge = 0;
     this.chestPos = null;
+    this.bobber = null;
 
     // Only the immediate neighbourhood is built behind the loading screen; the rest of
     // the ring streams in during play via world.update().
@@ -371,6 +374,8 @@ export class Game {
   input.onMouseUp = () => {
     // releasing the right button fires a drawn bow
     if (this.bowCharging) this.releaseBow();
+    // and lowers a raised shield
+    if (this.player) this.player.blocking = false;
     this.mining = null; this.miningProgress = 0;
   };
     input.onWheel = (dir) => {
@@ -471,6 +476,17 @@ export class Game {
     if (this.uiMode !== 'playing' || !this.input.locked) return;
     if (button === 0) { this.breaking = true; this.placeCooldown = 0; }
     if (button === 2) {
+      // shield: hold the right button to raise it; damage is mitigated in Player.damage
+      if (itemById(this.player.inventory.heldId)?.shield) {
+        this.player.blocking = true;
+        return;
+      }
+      // fishing rod: right-click casts, right-click again reels in
+      if (itemById(this.player.inventory.heldId)?.key === 'fishing_rod') {
+        this.useFishingRod();
+        this.breaking = false;
+        return;
+      }
       const hit = this.raycastHit();
       const blockKey = hit && BLOCKS[hit.id] ? BLOCKS[hit.id].key : null;
       if (blockKey === 'crafting_table') { this.openCraftingTable(); this.breaking = false; return; }
@@ -1481,6 +1497,9 @@ export class Game {
   /** The Mob class, for tooling that needs to spawn a test mob with an empty world. */
   mobClassForTests() { return Mob; }
 
+  /** Build a dropped-item entity for tooling (pickup / magnet tests). */
+  itemEntityForTests(id, count, x, y, z) { return new ItemEntity(id, count, x, y, z); }
+
   /** Resolve an item/block key to a stack id, for probes. */
   resolveKeyForTests(key) { return resolveAny(key); }
 
@@ -1574,6 +1593,7 @@ export class Game {
     const inv = this.player.inventory;
     if (inv.cursor) { inv.add(inv.cursor.id, inv.cursor.count); inv.cursor = null; }
     this.chestPos = null;
+    this.bobber = null;
     this.uiMode = 'playing';
     this.hud.hideChest();
     this.hadLock = false;
@@ -2402,6 +2422,60 @@ export class Game {
     return out;
   }
 
+  // ------------------------------------------------------------------ fishing
+  /** Right-click with the rod: cast a bobber, or reel in whatever is on the hook. */
+  useFishingRod() {
+    if (this.bobber) { this.reelFishing(); return; }
+    const p = this.player;
+    const [dx, dy, dz] = p.lookDir();
+    // a small upward arc so the hook lands a few blocks out
+    this.bobber = new Bobber(
+      p.x + dx * 0.6, p.eyeY - 0.1, p.z + dz * 0.6,
+      dx * 13, dy * 13 + 3.2, dz * 13, p.inventory.heldId,
+    );
+    this.audio.step('wood');
+  }
+
+  /** Reel in: a bite means a catch, otherwise the hook just comes back. */
+  reelFishing() {
+    const b = this.bobber;
+    this.bobber = null;
+    if (!b) return;
+    const inv = this.player.inventory;
+    if (!b.canReel) return;
+    const luck = Math.min(1, (inv.held ? inv.held.enchLevel('luck') : 0) * 0.25);
+    const catchInfo = rollCatch(Math.random, luck);
+    const id = resolveAny(catchInfo.key);
+    if (!id) return;
+    const left = inv.add(id, catchInfo.count);
+    if (left > 0) this.items.push(new ItemEntity(id, left, this.player.x, this.player.y + 0.6, this.player.z));
+    this.player.addXp(catchInfo.table === 'treasure' ? 6 : 2);
+    this.hud.toast(`钓到了 ${stackName(id)} ×${catchInfo.count}`);
+    this.audio.eat();
+    if (inv.damageHeld(1)) this.hud.toast('钓鱼竿已损坏');
+    this.hud.refreshHotbar();
+  }
+
+  /** Advance the bobber and keep it attached to the rod while it is out. */
+  updateFishing(dt) {
+    const b = this.bobber;
+    if (!b) return;
+    const p = this.player;
+    // holding something else (or reeling the rod away) drops the line
+    if (itemById(p.inventory.heldId)?.key !== 'fishing_rod') { this.bobber = null; return; }
+    if (Math.hypot(b.x - p.x, b.z - p.z) > 42 || b.y < -4) { this.bobber = null; return; }
+    const bx = Math.floor(b.x), by = Math.floor(b.y), bz = Math.floor(b.z);
+    const inWater = this.world.isLiquidAt(bx, by, bz);
+    const inGround = this.world.isSolidAt(bx, by, bz);
+    const before = b.state;
+    b.update(dt, inWater, inGround);
+    // the moment a fish bites, splash so the player can react
+    if (before !== 'biting' && b.state === 'biting') {
+      this.particles.spawnBlockBreak(bx, by + 0.2, bz, idOf('water'), 6);
+      this.audio.step('water');
+    }
+  }
+
   /** Right-click while holding food heals a little hunger. */
   tryEat() {    const inv = this.player.inventory;
     const s = inv.held;
@@ -2737,6 +2811,12 @@ export class Game {
     const hit = this.raycastHit();
     if (!hit) return;
     const inv = this.player.inventory;
+    // creative pick gives a full stack straight into the held slot
+    if (inv.creative) {
+      inv.slots[inv.selected] = new ItemStack(hit.id, 64);
+      this.hud.refreshHotbar();
+      return;
+    }
     for (let i = 0; i < 9; i++) {
       if (inv.slots[i] && inv.slots[i].id === hit.id) { inv.selected = i; this.hud.refreshHotbar(); return; }
     }
@@ -3017,6 +3097,8 @@ export class Game {
 
       this.placeCooldown -= dt;
       if (input.buttons[2] && this.placeCooldown <= 0) { this.placeBlock(); this.placeCooldown = 0.22; }
+      // a shield only stays up while the button is actually held
+      if (this.player.blocking && !input.buttons[2]) this.player.blocking = false;
       this.updateMining(dt);
     } else {
       // keep physics idling so the world does not freeze mid-air
@@ -3031,6 +3113,7 @@ export class Game {
     // buttons pop back out and pressure plates react to whoever is standing on them
     this.world.tickRedstone(dt, [p, ...this.mobs]);
     // hoppers move items between containers on their own slow cadence
+    this.updateFishing(dt);
     this.world.tickHoppers(dt, this.world.chunks);
     this.world.tickRepeaters(dt);
     this.updateSleeping(dt);
@@ -3233,7 +3316,8 @@ export class Game {
     for (const m of this.mobs) {
       const d = Math.hypot(m.x - p.x, m.z - p.z);
       if (d > viewDistBlocks) continue;
-      const model = m4aim(new Float32Array(16), m.x, m.y, m.z, Math.atan2(m.x - p.x, -(m.z - p.z)) + Math.PI, 0, 1, 1, 1);
+      // face the mob's own heading; deriving it from the player made mobs walk backwards
+      const model = m4aim(new Float32Array(16), m.x, m.y, m.z, m.yaw || 0, 0, 1, 1, 1);
       const parts = mobPartsCached(m);
       // tint by light so mobs in caves are dark
       const lightHere = lightCurve(skyLevel(w, Math.floor(m.x), Math.floor(m.y + 0.5), Math.floor(m.z)), blockLevel(w, Math.floor(m.x), Math.floor(m.y + 0.5), Math.floor(m.z)));
@@ -3257,6 +3341,16 @@ export class Game {
       m4translate(model, -0.5, 0, -0.5);
       const lightHere = lightCurve(skyLevel(w, Math.floor(it.x), Math.floor(it.y), Math.floor(it.z)), blockLevel(w, Math.floor(it.x), Math.floor(it.y), Math.floor(it.z)));
       this.renderer.drawBlockMesh(model, mesh.vao, mesh.quads, fogColor, skyLightColor, 0.35 + 0.65 * lightHere, 0.5);
+    }
+
+    // fishing bobber: a small cube that turns orange while a fish is biting
+    if (this.bobber) {
+      const b = this.bobber;
+      const bobModel = m4aim(new Float32Array(16), b.x, b.y + 0.1, b.z, 0, 0, 1, 1, 1);
+      const bobColor = b.state === 'biting' ? [1, 0.45, 0.25, 1] : [0.96, 0.96, 0.98, 1];
+      this.renderer.drawBoxModel(bobModel, [
+        { x: -0.09, y: -0.09, z: -0.09, w: 0.18, h: 0.18, d: 0.18, color: bobColor, light: 1 },
+      ], fogColor, skyLightColor);
     }
 
     this.renderer.drawParticles(this.particles.active(), fogColor, skyLightColor);

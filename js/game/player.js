@@ -2,6 +2,7 @@
 import { clamp } from '../core/math.js';
 import { SOLID, LIQUID, baseId } from '../core/blocks.js';
 import { WORLD_H } from '../world/chunk.js';
+import { maxDurability } from './inventory.js';
 
 export const PLAYER_WIDTH = 0.6;
 export const PLAYER_HEIGHT = 1.8;
@@ -29,6 +30,7 @@ export class Player {
     this.headInWater = false;
     this.sprinting = false;
     this.sneaking = false;
+    this.blocking = false;   // shield raised: right button held with a shield in hand
     this.flying = false;
     this.health = 20;
     this.maxHealth = 20;
@@ -284,6 +286,26 @@ export class Player {
 
   damage(amount, cause = 'generic') {
     if (this.mode === GAMEMODE.CREATIVE && cause !== 'void') return;
+    // A raised shield absorbs most of a physical hit. Environmental damage (fall, drown,
+    // starve, void, poison) cannot be blocked, matching the original game.
+    const blockable = cause === 'mob' || cause === 'arrow' || cause === 'explosion';
+    if (this.blocking && blockable && amount > 0) {
+      amount *= 0.25;
+      if (this.inventory) {
+        const s = this.inventory.held;
+        if (s && s.id < 0) {
+          const maxDur = maxDurability(s.id);
+          if (maxDur > 0) {
+            if (s.durability === null || s.durability === undefined) s.durability = maxDur;
+            s.durability -= 1;
+            if (s.durability <= 0) {
+              this.inventory.slots[this.inventory.selected] = null;
+              if (this.onShieldBreak) this.onShieldBreak();
+            }
+          }
+        }
+      }
+    }
     this.health = Math.max(0, this.health - amount);
     this.hurtTime = 0.45;
     this.lastDamageTime = 0;

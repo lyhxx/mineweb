@@ -3,7 +3,7 @@
 // Stacks hold either a block id (>= 0) or an item id (< 0); see core/items.js. The same
 // Inventory object therefore serves the personal grid, the crafting table's 3x3 grid and
 // the furnace's three slots — only the grid size and the open UI differ.
-import { ItemStack, stackLimit, stackName } from '../core/blocks.js';
+import { ItemStack, stackLimit, stackName, BLOCKS } from '../core/blocks.js';
 import { itemByKey, itemById, TIER_STATS } from '../core/items.js';
 import { eligibleEnchants, rollOffers, enchantFamilies, stackEnchants, protectionPoints } from '../core/enchant.js';
 import { brewResult as brewRecipes } from '../core/potions.js';
@@ -145,6 +145,10 @@ RECIPES.push({ id: 'piston', name: '活塞', key: { P: 'planks', C: 'cobblestone
 RECIPES.push({ id: 'hopper', name: '漏斗', key: { I: 'iron_ingot', C: 'chest' }, rows: ['I I', 'ICI', ' I '], out: { key: 'hopper', count: 1 } });
 RECIPES.push({ id: 'dispenser', name: '发射器', key: { C: 'cobblestone', B: 'bow', R: 'redstone_dust' }, rows: ['CCC', 'CBC', 'CRC'], out: { key: 'dispenser', count: 1 } });
 RECIPES.push({ id: 'repeater', name: '红石中继器', key: { S: 'stone', R: 'redstone_torch', D: 'redstone_dust' }, rows: ['SSS', 'RDR'], out: { key: 'repeater_item', count: 1 } });
+
+// ---------------------------------------------------------------- fishing + shield
+RECIPES.push({ id: 'fishing_rod', name: '钓鱼竿', key: { S: 'stick', T: 'string' }, rows: ['  S', ' ST', 'S T'], out: { key: 'fishing_rod', count: 1 } });
+RECIPES.push({ id: 'shield', name: '盾牌', key: { P: 'planks', I: 'iron_ingot' }, rows: ['PPP', 'PIP', ' P '], out: { key: 'shield_item', count: 1 } });
 
 /** Look up a recipe by its id (the recipe book UI uses this). */
 export function recipeById(id) { return RECIPES.find((r) => r.id === id) || null; }
@@ -466,15 +470,35 @@ export class Inventory {
   }
 
   /** Creative palette: the first hotbar row of every interesting block and item. */
+  /**
+   * Creative palette: the hotbar plus the first two pack rows are filled with blocks so
+   * creative mode is immediately usable. Stacks never deplete (see consumeHeld), and the
+   * full catalogue — every block and item — stays reachable through the creative tab in
+   * the inventory screen.
+   */
   giveCreativePalette() {
     this.slots.fill(null);
-    const keys = [
-      'planks', 'cobblestone', 'crafting_table', 'furnace', 'torch', 'glass', 'log', 'sand', 'stone',
+    if (!this.creative) return;
+    // hotbar first: the blocks you reach for constantly
+    const hotbar = [
+      'grass', 'dirt', 'stone', 'cobblestone', 'planks', 'log', 'sand', 'glass', 'torch',
     ];
-    keys.forEach((k, i) => {
-      const id = resolveAny(k);
-      if (id) this.slots[i] = new ItemStack(id, 64);
-    });
+    const used = new Set();
+    let slot = 0;
+    // stop before the armour block: those four slots only ever hold armour
+    const limit = ARMOR_START;
+    const put = (key, count = 64) => {
+      const id = resolveAny(key);
+      if (!id || used.has(id) || slot >= limit) return;
+      used.add(id);
+      this.slots[slot++] = new ItemStack(id, count);
+    };
+    for (const key of hotbar) put(key);
+    // then the rest of the catalogue in block-id order, so nothing is unreachable
+    for (let id = 1; id < BLOCKS.length && slot < limit; id++) {
+      if (!BLOCKS[id]) continue;
+      put(BLOCKS[id].key);
+    }
   }
 
   serialize() {

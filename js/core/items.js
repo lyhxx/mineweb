@@ -274,4 +274,7 @@ export function resolveIds() {
   smelt(B('log'), 'charcoal', 1, 10);
   smelt(K('porkchop'), 'cooked_porkchop', 1, 8);
   smelt(K('clay_ball'), 'brick_item', 1, 10);
+  // fishing: raw fish become cooked fish in a furnace
+  smelt(K('cod'), 'cooked_cod', 1, 8);
+  smelt(K('salmon'), 'cooked_salmon', 1, 8);
 }
