@@ -15,6 +15,7 @@ import { makeRng } from '../core/math.js';
 import { EFFECTS, DURATION, EffectTracker, parsePotionKey, brewResult } from '../core/potions.js';
 import { Bobber, rollCatch } from '../core/fishing.js';
 import { captureRegion, pasteBlueprint, BUILTIN_BLUEPRINTS } from '../world/blueprint.js';
+import { NetClient } from '../net/client.js';
 import { maxPowerAt, lastRecomputeSources, powerAt } from '../world/redstone.js';
 import { Input } from './input.js';
 import { Audio } from './audio.js';
@@ -90,6 +91,7 @@ export class Game {
     this.bowCharge = 0;
     this.chestPos = null;
     this.bobber = null;
+    this.net = null;          // NetClient while connected to a co-op server
     this.mining = null;
     this.miningProgress = 0;
     this.miningSoundTimer = 0;
@@ -1495,6 +1497,45 @@ export class Game {
     return result;
   }
 
+  // ------------------------------------------------------------------ co-op
+  /**
+   * Join a co-op server (tools/server.mjs). The server owns the edit log, so joining
+   * replays every change made so far instead of starting from a diverged world.
+   */
+  connectToServer(url, name) {
+    if (this.net) { this.net.close(); this.net = null; }
+    if (!url) { this.hud.toast('用法：/connect ws://主机:端口/'); return null; }
+    const target = String(url).replace(/^http/, 'ws');
+    this.net = new NetClient(target, name || 'player', {
+      onStatus: (text) => this.hud.toast(text),
+      onWelcome: (msg) => {
+        let applied = 0;
+        for (const [x, y, z, block] of msg.edits || []) {
+          this.world.setBlockAt(x, y, z, block);
+          applied++;
+        }
+        this.hud.chatLine(`已加入服务器：${(msg.players || []).length} 人在线，回放 ${applied} 处改动`, '#88ff88');
+        if (msg.seed && this.seed && String(msg.seed) !== String(this.seed)) {
+          this.hud.chatLine(`注意：服务器种子是 ${msg.seed}，和本世界不同，地形可能对不上`, '#ffcc66');
+        }
+      },
+      onJoin: (msg) => this.hud.chatLine(`${msg.name} 加入了游戏`, '#88ddff'),
+      onLeave: (msg) => this.hud.chatLine('有玩家离开了游戏', '#88ddff'),
+      onEdit: (msg) => this.world.setBlockAt(msg.x, msg.y, msg.z, msg.block),
+      onChat: (msg) => this.hud.chatLine(`<${msg.name}> ${msg.msg}`, '#dddddd'),
+    });
+    this.net.connect();
+    this.hud.toast('正在连接 ' + target);
+    return this.net;
+  }
+
+  disconnectFromServer() {
+    if (!this.net) { this.hud.toast('还没连接服务器'); return; }
+    this.net.close();
+    this.net = null;
+    this.hud.chatLine('已断开联机', '#88ddff');
+  }
+
   // ------------------------------------------------------------------ blueprints
   loadBlueprints() {
     try { return JSON.parse(localStorage.getItem('mineweb.blueprints.v1') || '{}'); } catch (e) { return {}; }
@@ -2655,6 +2696,9 @@ export class Game {
     if (text.startsWith('/')) {
       const [cmd, ...args] = text.slice(1).split(/\s+/);
       this.runCommand(cmd, args);
+    } else if (this.net && this.net.connected) {
+      // the server echoes chat back to everyone including us, so do not also print locally
+      this.net.chat(text);
     } else {
       this.hud.chatLine(`<玩家> ${text}`);
     }
@@ -2667,7 +2711,12 @@ export class Game {
       case 'help':
         this.hud.chatLine('/time set day|night · /tp x y z · /give block [n] · /gamemode creative|survival · /seed · /spawn · /kill · /weather clear|rain · /fps · /pack <url|off>', '#ffff88');
         break;
-      case 'save':
+      case 'connect':
+        this.connectToServer(args[0], args[1]);
+        break;
+      case 'disconnect':
+        this.disconnectFromServer();
+        break;      case 'save':
         if (!args[0]) { this.hud.toast('用法：/save <名字>'); break; }
         this.saveBlueprint(args[0]);
         break;
@@ -2943,6 +2992,9 @@ export class Game {
   recordEdit(x, y, z, id) {
     if (!this.world.editLog) this.world.editLog = new Map();
     this.world.editLog.set(x + ',' + y + ',' + z, id);
+    // relay our own changes; remote edits are applied straight to the world and never
+    // come through here, so this cannot echo
+    if (this.net && this.net.connected) this.net.edit(x, y, z, id);
   }
 
   // ------------------------------------------------------------------ simulation
@@ -3211,6 +3263,7 @@ export class Game {
     this.world.tickRedstone(dt, [p, ...this.mobs]);
     // hoppers move items between containers on their own slow cadence
     this.updateFishing(dt);
+    if (this.net) this.net.tick(dt, this.player);
     this.world.tickHoppers(dt, this.world.chunks);
     this.world.tickRepeaters(dt);
     this.updateSleeping(dt);
@@ -3438,6 +3491,25 @@ export class Game {
       m4translate(model, -0.5, 0, -0.5);
       const lightHere = lightCurve(skyLevel(w, Math.floor(it.x), Math.floor(it.y), Math.floor(it.z)), blockLevel(w, Math.floor(it.x), Math.floor(it.y), Math.floor(it.z)));
       this.renderer.drawBlockMesh(model, mesh.vao, mesh.quads, fogColor, skyLightColor, 0.35 + 0.65 * lightHere, 0.5);
+    }
+
+    // remote players: a simple blue figure so co-op is visible without name tags
+    if (this.net && this.net.players.size) {
+      for (const rp of this.net.players.values()) {
+        if (!Number.isFinite(rp.x) || !Number.isFinite(rp.y) || !Number.isFinite(rp.z)) continue;
+        const d = Math.hypot(rp.x - p.x, rp.z - p.z);
+        if (d > viewDistBlocks) continue;
+        const model = m4aim(new Float32Array(16), rp.x, rp.y, rp.z, rp.yaw || 0, 0, 1, 1, 1);
+        this.renderer.drawBoxModel(model, [
+          // body
+          { x: -0.3, y: 0, z: -0.15, w: 0.6, h: 1.2, d: 0.3, color: [0.22, 0.55, 0.95, 1], light: 1 },
+          // head
+          { x: -0.22, y: 1.2, z: -0.22, w: 0.44, h: 0.44, d: 0.44, color: [0.92, 0.74, 0.56, 1], light: 1 },
+          // legs
+          { x: -0.26, y: -0.75, z: -0.12, w: 0.2, h: 0.75, d: 0.24, color: [0.18, 0.28, 0.55, 1], light: 1 },
+          { x: 0.06, y: -0.75, z: -0.12, w: 0.2, h: 0.75, d: 0.24, color: [0.18, 0.28, 0.55, 1], light: 1 },
+        ], fogColor, skyLightColor);
+      }
     }
 
     // fishing bobber: a small cube that turns orange while a fish is biting

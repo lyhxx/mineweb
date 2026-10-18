@@ -807,6 +807,54 @@ try {
   check('a blueprint can be pasted from a URL', remote && remote.n > 20 && remote.floorOk,
     JSON.stringify({ blocks: remote && remote.n, floor: remote && remote.floorOk }));
 
+  // ---- co-op client: message routing, world application and edit relay
+  step('co-op client');
+  const coop = await ev(`(async () => {
+    const g = window.__MINEWEB__;
+    const out = {};
+    const sent = [];
+    // create the real client through the game so its handlers are the ones under test
+    g.connectToServer('ws://127.0.0.1:9/', 'probe');
+    const c = g.net;
+    if (!c) return { error: 'connectToServer returned no client' };
+    c.send = (o) => { sent.push(o); return true; };   // stub the transport
+    c.connected = true;
+    c.id = 9;
+    c._handle({ t: 'welcome', id: 9, seed: 'probe', players: [{ id: 2, name: 'bob', x: 1, y: 2, z: 3 }], edits: [] });
+    c._handle({ t: 'join', id: 3, name: 'carl', player: { x: 5, y: 6, z: 7 } });
+    c._handle({ t: 'move', id: 2, x: 9, y: 10, z: 11, yaw: 1, pitch: 0 });
+    c._handle({ t: 'chat', id: 2, name: 'bob', msg: 'hi there' });
+    out.players = c.players.size;
+    out.movedTo = c.players.get(2) ? c.players.get(2).x : null;
+    // a remote edit must land in the world
+    g.world.setBlockAt(2, 100, 2, 0);
+    c._handle({ t: 'edit', x: 2, y: 100, z: 2, block: 5 });
+    out.worldApplied = g.world.getBlockRaw(2, 100, 2) === 5;
+    // a local edit must be relayed once, and only once
+    sent.length = 0;
+    g.recordEdit(3, 70, 3, 6);
+    out.relayed = sent.length === 1 && sent[0].t === 'edit' && sent[0].block === 6;
+    // position updates are rate-limited to ~10 per second
+    sent.length = 0;
+    for (let i = 0; i < 60; i++) c.tick(1 / 60, g.player);
+    out.moveSends = sent.filter((s) => s.t === 'move').length;
+    out.dropped = c.players.size;
+    c._handle({ t: 'leave', id: 3 });
+    out.afterLeave = c.players.size;
+    g.disconnectFromServer();
+    out.netCleared = g.net === null;
+    return out;
+  })()`);
+  report.coop = coop;
+  check('co-op tracks remote players', coop && coop.players === 2 && coop.movedTo === 9,
+    JSON.stringify({ players: coop && coop.players, x: coop && coop.movedTo }));
+  check('a remote edit is applied to the world', coop && coop.worldApplied === true);
+  check('local edits are relayed exactly once', coop && coop.relayed === true);
+  check('position updates are rate-limited', coop && coop.moveSends >= 8 && coop.moveSends <= 12,
+    `${coop && coop.moveSends} sends/sec`);
+  check('leaving removes the player', coop && coop.afterLeave === 1);
+  check('disconnect tears the client down', coop && coop.netCleared === true);
+
   report.logs = logs.slice(0, 10);
   report.summary = {
     passed: report.checks.filter((c) => c.ok).length,

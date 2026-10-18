@@ -335,10 +335,32 @@ node tools/ai-build.mjs "a 7x7 stone watchtower with a ladder" packs/tower.json
 它兼容 OpenAI 的 chat-completions 形状，端点与密钥**只走环境变量**，仓库里没有任何密钥；
 不配端点时它会写出内置示例并打印将要发送的提示词，所以离线也能验证这条链路。
 
+### 联机（局域网 / 自建服务器）
+
+服务端是 `tools/server.mjs`，**零依赖**：同一个端口既提供静态文件，也接受 WebSocket，
+所以局域网联机只要一条命令：
+
+```bash
+node tools/server.mjs 8138
+```
+
+其他人打开 `http://<你的IP>:8138/`，进游戏后：
+
+```
+/connect ws://<你的IP>:8138/
+/disconnect
+```
+
+同步的是**方块改动**与**玩家位置**：服务端持有唯一权威的改动日志（落盘为
+`net-world.json`），后来加入的玩家会收到全量回放，所以看到的建筑和别人一致。
+协议细节、权威性与已知限制见 `docs/PROTOCOL.md`。
+
+诚实说明：生物、掉落物、熔炉/漏斗状态与时间流逝目前**各自独立**，没有身份验证，
+只适合局域网或自己搭建的环境。
+
 ---
 
 ## 3. 操作说明
-
 | 按键 | 功能 |
 |---|---|
 | W A S D | 移动 |
@@ -422,7 +444,7 @@ node tools/serve.mjs 8137                       # 终端 A
 node tools/verify.mjs http://127.0.0.1:8137/    # 终端 B
 ```
 
-最近一次结果：**107/107 全部通过**（`reports/verify-report.json`）
+最近一次结果：**113/113 全部通过**（`reports/verify-report.json`）
 
 ```
   PASS  world starts                     [~4.7s]
@@ -511,6 +533,12 @@ node tools/verify.mjs http://127.0.0.1:8137/    # 终端 B
   PASS  capture round-trips size and palette
   PASS  a captured blueprint can be pasted again
   PASS  a blueprint can be pasted from a URL
+  PASS  co-op tracks remote players
+  PASS  a remote edit is applied to the world
+  PASS  local edits are relayed exactly once
+  PASS  position updates are rate-limited
+  PASS  leaving removes the player
+  PASS  disconnect tears the client down
   PASS  mob spawning / mob damage and death
   PASS  player damage / death and respawn
   PASS  day/night cycle

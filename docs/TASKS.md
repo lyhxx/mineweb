@@ -2,7 +2,7 @@
 
 > 目标：Web 版《我的世界》，玩法尽量对齐，帧率 ≥60。
 > 这份文件是进度的唯一事实来源；每完成一项就打勾，并在同一次提交里更新。
-> 最近一次自检：`node tools/verify.mjs` → **106/106 通过**。
+> 最近一次自检：`node tools/verify.mjs` → **113/113 通过**。
 
 图例：`[x]` 已完成 · `[ ]` 未开始 · `[~]` 部分完成
 
@@ -32,12 +32,15 @@
 ## P2 架构
 
 - [ ] 命令系统从 `switch` 抽成注册表（参数 schema / 别名 / 自动补全 / 历史）
-- [ ] `tools/cli.mjs` 统一入口：`serve | bench | verify | new-world | world-info`
+- [x] `tools/cli.mjs` 统一入口：`serve | bench | verify | shots | net | info`
 - [x] 蓝图格式 `js/world/blueprint.js` + `/paste <name|url>` + `/save <name>` + `/bp`
-- [ ] `tools/ai-build.mjs`：自然语言 → 蓝图的 HTTP 适配器（端点与密钥走环境变量）
-- [ ] 联机服务端 `tools/server.mjs`：零依赖 RFC6455 WebSocket + 编辑日志落盘
-- [ ] 联机客户端 `js/net/client.js`：远端玩家 / 方块同步 / 聊天 / 断线重连
-- [ ] `docs/PROTOCOL.md` 协议文档（含版本号）
+- [x] `tools/ai-build.mjs`：自然语言 → 蓝图的 HTTP 适配器（端点与密钥走环境变量）
+- [x] 联机服务端 `tools/server.mjs`：零依赖 RFC6455 WebSocket + 编辑日志落盘
+- [x] 联机客户端 `js/net/client.js`：远端玩家 / 方块同步 / 聊天 / 断线重连
+- [x] `docs/PROTOCOL.md` 协议文档
+- [x] `tools/net-test.mjs`：两个客户端的协议自检（含重启后日志回放）
+- [ ] 联机只同步方块与位置；生物 / 掉落物 / 容器状态仍是各自独立
+- [ ] 联机没有身份验证与权限控制（仅适合局域网）
 
 ## P3 玩法（已完成）
 

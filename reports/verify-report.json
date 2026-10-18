@@ -3,7 +3,7 @@
     {
       "name": "world starts",
       "ok": true,
-      "detail": "1369ms"
+      "detail": "1395ms"
     },
     {
       "name": "terrain generated",
@@ -353,7 +353,7 @@
     {
       "name": "walking and chunk streaming",
       "ok": true,
-      "detail": "{\"moved\":87.14,\"startY\":77,\"endY\":77,\"speed\":10.9,\"chunks\":374,\"meshQueue\":0,\"mode\":\"playing\",\"simMsPerFrame\":0.924}"
+      "detail": "{\"moved\":87.14,\"startY\":77,\"endY\":77,\"speed\":10.9,\"chunks\":374,\"meshQueue\":0,\"mode\":\"playing\",\"simMsPerFrame\":1.319}"
     },
     {
       "name": "chat commands",
@@ -386,12 +386,12 @@
     {
       "name": "simulation step is cheap (<4ms)",
       "ok": true,
-      "detail": "0.585ms/frame (ceiling 1708 fps)"
+      "detail": "0.537ms/frame (ceiling 1862 fps)"
     },
     {
       "name": "average fps >= 60",
       "ok": true,
-      "detail": "118.8 fps"
+      "detail": "119.4 fps"
     },
     {
       "name": "median fps >= 60",
@@ -401,17 +401,17 @@
     {
       "name": "lower screen renders solid terrain",
       "ok": true,
-      "detail": "24.4% near-black pixels"
+      "detail": "0.1% near-black pixels"
     },
     {
       "name": "mesh vertex count matches 6 per quad",
       "ok": true,
-      "detail": "0 bad of 102 chunks"
+      "detail": "0 bad of 95 chunks"
     },
     {
       "name": "frame is bright enough to be a lit scene",
       "ok": true,
-      "detail": "brightness 153.8"
+      "detail": "brightness 158.2"
     },
     {
       "name": "sensitivity is in a sane range",
@@ -467,12 +467,12 @@
     {
       "name": "mobs face their direction of travel",
       "ok": true,
-      "detail": "yaw -1.54 @ 1.72"
+      "detail": "yaw -1.22 @ 1.04"
     },
     {
       "name": "fishing casts and reels in a catch",
       "ok": true,
-      "detail": "{\"cast\":true,\"gained\":1}"
+      "detail": "{\"cast\":true,\"gained\":4}"
     },
     {
       "name": "shield reduces damage and wears",
@@ -516,9 +516,35 @@
       "name": "a blueprint can be pasted from a URL",
       "ok": true,
       "detail": "{\"blocks\":40,\"floor\":true}"
+    },
+    {
+      "name": "co-op tracks remote players",
+      "ok": true,
+      "detail": "{\"players\":2,\"x\":9}"
+    },
+    {
+      "name": "a remote edit is applied to the world",
+      "ok": true
+    },
+    {
+      "name": "local edits are relayed exactly once",
+      "ok": true
+    },
+    {
+      "name": "position updates are rate-limited",
+      "ok": true,
+      "detail": "9 sends/sec"
+    },
+    {
+      "name": "leaving removes the player",
+      "ok": true
+    },
+    {
+      "name": "disconnect tears the client down",
+      "ok": true
     }
   ],
-  "loadMs": 1369,
+  "loadMs": 1395,
   "world": {
     "seed": 1919358098,
     "chunks": 289,
@@ -998,27 +1024,27 @@
     "debug": true
   },
   "simPerformance": {
-    "simMsPerFrame": 0.585,
+    "simMsPerFrame": 0.537,
     "frames": 300,
-    "maxSimFps": 1708
+    "maxSimFps": 1862
   },
   "performance": {
-    "frames": 595,
-    "avgFps": 118.80278737296086,
-    "p99FrameMs": 16.600000000000364,
-    "fps1pctLow": 60.24096385542037,
+    "frames": 598,
+    "avgFps": 119.40179302358088,
+    "p99FrameMs": 8.5,
+    "fps1pctLow": 117.6470588235294,
     "medianFps": 120.48192771082753,
-    "draws": 41,
-    "quads": 26222,
-    "viewDistance": 8
+    "draws": 21,
+    "quads": 7413,
+    "viewDistance": 7
   },
-  "performanceNote": "1% low (informational): 60.2 fps, p99 16.6 ms",
+  "performanceNote": "1% low (informational): 117.6 fps, p99 8.5 ms",
   "visual": {
-    "blackRatio": 0.2440277777777778,
-    "avgBrightness": 153.84351851851852,
-    "slots": 102,
+    "blackRatio": 0.0011805555555555556,
+    "avgBrightness": 158.16835648148148,
+    "slots": 95,
     "badSlots": 0,
-    "draws": 41
+    "draws": 21
   },
   "mouseLook": {
     "sens": 0.0022,
@@ -1035,12 +1061,12 @@
     "pickCount": 64,
     "survivalCountAfter": 4,
     "pickupGained": 4,
-    "mobSpeed": 1.7230755155614919,
-    "mobYaw": -1.5423950525703163,
+    "mobSpeed": 1.0426861903709244,
+    "mobYaw": -1.221064788977892,
     "mobHeadingOk": true,
     "bobberCast": true,
     "bobberAfterReel": false,
-    "fishingGained": 1,
+    "fishingGained": 4,
     "shieldedHealth": 17.5,
     "shieldDurability": 335,
     "unshieldedHealth": 10,
@@ -1076,12 +1102,22 @@
     ],
     "floorOk": true
   },
+  "coop": {
+    "players": 2,
+    "movedTo": 9,
+    "worldApplied": true,
+    "relayed": true,
+    "moveSends": 9,
+    "dropped": 2,
+    "afterLeave": 1,
+    "netCleared": true
+  },
   "logs": [
     "Failed to load resource: the server responded with a status of 404 (Not Found)"
   ],
   "summary": {
-    "passed": 107,
+    "passed": 113,
     "failed": 0,
-    "total": 107
+    "total": 113
   }
 }

@@ -1,3 +1,6 @@
+# ---- multiplayer world state written by tools/server.mjs ----
+net-world.json
+
 # ---- runtime / editor junk ----
 *.log
 *.tmp
