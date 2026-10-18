@@ -1,0 +1,31 @@
+# ---- runtime / editor junk ----
+*.log
+*.tmp
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+*.swp
+
+# ---- local Chrome profiles created by the test harness ----
+# tools/bench.mjs, shot.mjs and the verify suite each spawn a throwaway Chrome with a
+# temporary --user-data-dir; make sure none of them ever get committed.
+.chrome-profile/
+dsh-chrome-*/
+
+# ---- throwaway output from ad-hoc probes ----
+# the durable reports/ and shots/ folders are committed on purpose: they are the
+# evidence behind the numbers in README.md
+verify-out.txt
+bench-out.txt
+shot-out.txt
+*-out.txt
+audit-out.json
+m.txt
+n.txt
+r.txt
+t.txt
+
+# ---- OS ----
+$RECYCLE.BIN/

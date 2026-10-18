@@ -1,0 +1,59 @@
+{
+  "url": "http://127.0.0.1:8137/",
+  "chrome": "C:\\Users\\11952\\AppData\\Local\\Google\\Chrome\\Application\\chrome.exe",
+  "port": 9286,
+  "title": "MineWeb — 我的世界 Web 版",
+  "canvasOk": true,
+  "boot": {
+    "hasGame": true,
+    "fatalVisible": false,
+    "fatalText": "",
+    "hasWebGL2": true
+  },
+  "started": true,
+  "sample": {
+    "frames": 1192,
+    "seconds": 10.00069999999851,
+    "avgFps": 119.20119201191959,
+    "medianFrameMs": 8.300000000001091,
+    "fps1pctLow": 113.63636363637303,
+    "worstFrameMs": 16.799999999999272,
+    "p99FrameMs": 8.799999999999272
+  },
+  "engine": {
+    "seed": 877887513,
+    "chunks": 289,
+    "viewDistance": 8,
+    "mobs": 16,
+    "items": 0,
+    "playerPos": [
+      34.5,
+      65,
+      -35.5
+    ],
+    "biome": "平原",
+    "drawCalls": 103,
+    "quads": 110509,
+    "culled": 55,
+    "glRenderer": "ANGLE (Intel, Intel(R) Arc(TM) Graphics (0x00007D55) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+    "worldMemoryMB": 73.35
+  },
+  "shots": [
+    "shots-bench\\01-ground.png",
+    "shots-bench\\02-aerial.png",
+    "shots-bench\\03-night.png",
+    "shots-bench\\04-cave-torch.png",
+    "shots-bench\\05-walking.png",
+    "shots-bench\\06-inventory.png"
+  ],
+  "streaming": {
+    "avgFps": 118.50524062040988,
+    "fps1pctLow": 60.24096385541377,
+    "frames": 476
+  },
+  "walked": 2.2,
+  "inventorySlots": 228,
+  "consoleErrors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ]
+}

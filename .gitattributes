@@ -1,0 +1,14 @@
+# Normalise line endings so the repo is stable across machines.
+# Everything is LF in the repository; Windows-only launchers keep CRLF because
+# cmd.exe is unhappy with LF-only .bat files.
+* text=auto eol=lf
+
+*.bat text eol=crlf
+*.ps1 text eol=crlf
+*.cmd text eol=crlf
+
+# Binary assets: never let git try to diff or convert these.
+*.png binary
+*.jpg binary
+*.webp binary
+*.ico binary

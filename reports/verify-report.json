@@ -1,0 +1,956 @@
+{
+  "checks": [
+    {
+      "name": "world starts",
+      "ok": true,
+      "detail": "1290ms"
+    },
+    {
+      "name": "terrain generated",
+      "ok": true,
+      "detail": "289 chunks (pre-generated + streamed)"
+    },
+    {
+      "name": "player on surface",
+      "ok": true,
+      "detail": "y=65 surface=65"
+    },
+    {
+      "name": "block breaking",
+      "ok": true,
+      "detail": "{\"before\":5,\"after\":0}"
+    },
+    {
+      "name": "block placing",
+      "ok": true,
+      "detail": "{\"before\":0,\"after\":5}"
+    },
+    {
+      "name": "inventory stacking",
+      "ok": true,
+      "detail": "{\"logCount\":3,\"recipe\":\"planks\",\"out\":{\"id\":5,\"count\":4},\"ok\":true,\"afterLogs\":2,\"planks\":4}"
+    },
+    {
+      "name": "crafting match (2x2)",
+      "ok": true,
+      "detail": "{\"logCount\":3,\"recipe\":\"planks\",\"out\":{\"id\":5,\"count\":4},\"ok\":true,\"afterLogs\":2,\"planks\":4}"
+    },
+    {
+      "name": "crafting consumes input",
+      "ok": true,
+      "detail": "{\"logCount\":3,\"recipe\":\"planks\",\"out\":{\"id\":5,\"count\":4},\"ok\":true,\"afterLogs\":2,\"planks\":4}"
+    },
+    {
+      "name": "item registry",
+      "ok": true,
+      "detail": "107 items / 20 tools"
+    },
+    {
+      "name": "tool recipe consumes the 3x3 grid",
+      "ok": true,
+      "detail": "{\"recipe\":\"wood_pickaxe\",\"out\":[-22,1],\"expectPickaxe\":-22,\"ok\":true}"
+    },
+    {
+      "name": "2x2 grid rejects 3x3 recipes",
+      "ok": true
+    },
+    {
+      "name": "furnace smelts ore to ingot",
+      "ok": true,
+      "detail": "10.1s -> [-4,1]"
+    },
+    {
+      "name": "ore blocks drop materials",
+      "ok": true,
+      "detail": "-4"
+    },
+    {
+      "name": "tool matches block and wears out",
+      "ok": true,
+      "detail": "{\"held\":-22,\"expect\":-22,\"isItem\":true,\"toolClass\":\"pickaxe\",\"blockTool\":\"pickaxe\",\"speed\":2,\"effective\":true,\"durabilityBefore\":60,\"durabilityAfter\":59}"
+    },
+    {
+      "name": "eating restores hunger",
+      "ok": true,
+      "detail": "{\"ate\":true,\"hunger\":15,\"left\":1}"
+    },
+    {
+      "name": "every item icon renders",
+      "ok": true,
+      "detail": "107 icons"
+    },
+    {
+      "name": "armour absorbs damage and wears",
+      "ok": true,
+      "detail": "{\"helmetId\":-51,\"chestId\":-52,\"points\":4,\"rawDamage\":10,\"mitigatedDamage\":8.4,\"reduced\":true,\"durabilityAfter\":287,\"maxDurability\":288,\"brokePieces\":0}"
+    },
+    {
+      "name": "armour slots are type-filtered",
+      "ok": true
+    },
+    {
+      "name": "bow consumes arrows and scales with draw",
+      "ok": true,
+      "detail": "{\"isBow\":true,\"power\":2,\"firedWithoutArrows\":0,\"arrowsBefore\":8,\"arrowsAfter\":7,\"arrowsInFlight\":1,\"arrowDamage\":6,\"arrowSpeed\":60,\"durability\":119}"
+    },
+    {
+      "name": "chest storage round-trips",
+      "ok": true,
+      "detail": "{\"slots\":27,\"takenBack\":[5,30],\"slotCleared\":true,\"savedKeys\":1,\"reloadedCount\":7,\"reloadedId\":5,\"ok\":true}"
+    },
+    {
+      "name": "structures generate chests",
+      "ok": true,
+      "detail": "{\"house\":15,\"mineshaft\":13,\"dungeon\":28,\"ruin\":9}"
+    },
+    {
+      "name": "structure chests hold themed loot",
+      "ok": true,
+      "detail": "{\"pos\":[70,64,55],\"theme\":\"house\",\"filledSlots\":4,\"totalStacks\":13,\"deterministic\":true}"
+    },
+    {
+      "name": "structure blocks exist in the world",
+      "ok": true,
+      "detail": "{\"cobble\":110,\"planks\":36,\"torchBlocks\":1}"
+    },
+    {
+      "name": "hoe tills dirt into farmland",
+      "ok": true,
+      "detail": "{\"hoeId\":-36,\"tilled\":true,\"afterTill\":55,\"expectFarmland\":55,\"planted\":true,\"afterPlant\":56,\"expectWheat\":56,\"stageAfterTicks\":3,\"harvested\":-15,\"expectWheatItem\":-15,\"breadOk\":true}"
+    },
+    {
+      "name": "seeds plant and wheat grows to ripe",
+      "ok": true,
+      "detail": "{\"hoeId\":-36,\"tilled\":true,\"afterTill\":55,\"expectFarmland\":55,\"planted\":true,\"afterPlant\":56,\"expectWheat\":56,\"stageAfterTicks\":3,\"harvested\":-15,\"expectWheatItem\":-15,\"breadOk\":true}"
+    },
+    {
+      "name": "harvest yields wheat and bakes bread",
+      "ok": true,
+      "detail": "{\"hoeId\":-36,\"tilled\":true,\"afterTill\":55,\"expectFarmland\":55,\"planted\":true,\"afterPlant\":56,\"expectWheat\":56,\"stageAfterTicks\":3,\"harvested\":-15,\"expectWheatItem\":-15,\"breadOk\":true}"
+    },
+    {
+      "name": "bed refuses daytime sleep",
+      "ok": true
+    },
+    {
+      "name": "bed skips night and sets spawn",
+      "ok": true,
+      "detail": "{\"refusedByDay\":true,\"startedSleep\":true,\"dayTimeAfter\":0.02,\"spawnMoved\":true,\"isMorning\":true}"
+    },
+    {
+      "name": "spider has its own multi-part model",
+      "ok": true,
+      "detail": "{\"spiderParts\":15,\"spiderKind\":\"spider\",\"spiderHasLegs\":true,\"spiderAlive\":true,\"arrowSpawned\":true,\"hostileArrow\":true,\"playerDamaged\":true,\"damageTaken\":2}"
+    },
+    {
+      "name": "skeleton arrow spawns and damages the player",
+      "ok": true,
+      "detail": "{\"spiderParts\":15,\"spiderKind\":\"spider\",\"spiderHasLegs\":true,\"spiderAlive\":true,\"arrowSpawned\":true,\"hostileArrow\":true,\"playerDamaged\":true,\"damageTaken\":2}"
+    },
+    {
+      "name": "flint and steel lights a portal",
+      "ok": true,
+      "detail": "{\"lit\":true,\"blocks\":6}"
+    },
+    {
+      "name": "nether portal changes dimension",
+      "ok": true,
+      "detail": "[8,106,9]"
+    },
+    {
+      "name": "nether generates its own blocks",
+      "ok": true,
+      "detail": "{\"10\":7803,\"11\":4046,\"28\":324,\"43\":11,\"44\":20881,\"46\":107,\"58\":3}"
+    },
+    {
+      "name": "arrival builds a return portal",
+      "ok": true,
+      "detail": "12 portal blocks"
+    },
+    {
+      "name": "portal round trip returns to the overworld",
+      "ok": true,
+      "detail": "[71,69,78]"
+    },
+    {
+      "name": "melee swing damages a mob",
+      "ok": true,
+      "detail": "{\"swordId\":-35,\"hitSomething\":true,\"swordDamage\":4,\"fistDamage\":1,\"swordBeatsFist\":true,\"knockback\":true}"
+    },
+    {
+      "name": "swords hit harder than fists",
+      "ok": true,
+      "detail": "{\"swordId\":-35,\"hitSomething\":true,\"swordDamage\":4,\"fistDamage\":1,\"swordBeatsFist\":true,\"knockback\":true}"
+    },
+    {
+      "name": "enchanting table offers enchantments",
+      "ok": true,
+      "detail": "[\"unbreaking:1\",\"sharpness:1\"]"
+    },
+    {
+      "name": "applying an enchantment costs levels",
+      "ok": true,
+      "detail": "{\"spent\":4,\"keys\":[\"unbreaking\"]}"
+    },
+    {
+      "name": "enchantments are stored on the stack",
+      "ok": true,
+      "detail": "plain=0 enchanted=3"
+    },
+    {
+      "name": "villagers roll deterministic offers",
+      "ok": true,
+      "detail": "{\"prof\":\"smith\",\"offers\":3}"
+    },
+    {
+      "name": "a completed trade moves items both ways",
+      "ok": true,
+      "detail": "{\"ok\":true,\"paid\":3,\"received\":1,\"uses\":1,\"expectedPay\":3,\"expectedGet\":1}"
+    },
+    {
+      "name": "unaffordable trades are refused",
+      "ok": true
+    },
+    {
+      "name": "villagers do not despawn",
+      "ok": true
+    },
+    {
+      "name": "the End generates an island",
+      "ok": true,
+      "detail": "{\"11\":26,\"60\":2914}"
+    },
+    {
+      "name": "the End has pillars, crystals and an exit portal",
+      "ok": true,
+      "detail": "pillars=10 crystals=10 exit=9"
+    },
+    {
+      "name": "the Ender Dragon spawns as a boss",
+      "ok": true,
+      "detail": "hp=200 parts=13"
+    },
+    {
+      "name": "crystals heal the dragon until destroyed",
+      "ok": true
+    },
+    {
+      "name": "felling the dragon shows the victory screen",
+      "ok": true
+    },
+    {
+      "name": "the End portal returns to the overworld",
+      "ok": true
+    },
+    {
+      "name": "brewing turns water into potions",
+      "ok": true,
+      "detail": "{\"wart\":[\"awkward_potion\",\"awkward_potion\",null],\"sugar\":[\"potion_swiftness\",\"potion_swiftness\",null]}"
+    },
+    {
+      "name": "drinking a potion applies its effect",
+      "ok": true,
+      "detail": "speed x1.2"
+    },
+    {
+      "name": "instant potions heal at once",
+      "ok": true,
+      "detail": "health=18"
+    },
+    {
+      "name": "poison damages but never kills",
+      "ok": true,
+      "detail": "health=3"
+    },
+    {
+      "name": "fire resistance cancels burning",
+      "ok": true
+    },
+    {
+      "name": "potion registry is complete",
+      "ok": true,
+      "detail": "16 potions"
+    },
+    {
+      "name": "lever powers wire and the lamp lights",
+      "ok": true,
+      "detail": "{\"near\":15,\"lampOn\":true}"
+    },
+    {
+      "name": "signal decays one per block",
+      "ok": true,
+      "detail": "near=15 far=11 atLamp=4"
+    },
+    {
+      "name": "piston extends, pushes a block and retracts",
+      "ok": true,
+      "detail": "{\"ext\":true,\"pushed\":true}"
+    },
+    {
+      "name": "button is momentary and plate reacts",
+      "ok": true,
+      "detail": "{\"bOn\":15,\"bOff\":0,\"pOn\":15}"
+    },
+    {
+      "name": "redstone component registry",
+      "ok": true,
+      "detail": "12 blocks"
+    },
+    {
+      "name": "hopper moves items between containers",
+      "ok": true,
+      "detail": "{\"src\":2,\"dst\":3}"
+    },
+    {
+      "name": "powered hopper freezes, unpowered resumes",
+      "ok": true,
+      "detail": "{\"powered\":true,\"froze\":true}"
+    },
+    {
+      "name": "repeater delays the signal",
+      "ok": true,
+      "detail": "{\"off\":true,\"on\":true}"
+    },
+    {
+      "name": "repeater passes the signal back off",
+      "ok": true
+    },
+    {
+      "name": "mob spawning",
+      "ok": true,
+      "detail": "{\"before\":0,\"after\":7,\"spawned\":[\"pig\",\"cow\",\"sheep\",\"chicken\",\"zombie\",\"creeper\",\"skeleton\"]}"
+    },
+    {
+      "name": "mob damage and death",
+      "ok": true,
+      "detail": "{\"hp\":10,\"after\":6,\"dead\":true,\"xp\":78}"
+    },
+    {
+      "name": "player damage",
+      "ok": true,
+      "detail": "{\"h1\":13,\"dead\":true,\"afterRespawn\":20,\"stillDead\":false}"
+    },
+    {
+      "name": "death and respawn",
+      "ok": true,
+      "detail": "{\"h1\":13,\"dead\":true,\"afterRespawn\":20,\"stillDead\":false}"
+    },
+    {
+      "name": "day/night cycle",
+      "ok": true,
+      "detail": "{\"noon\":1,\"midnight\":0.22,\"nightAtMidnight\":true}"
+    },
+    {
+      "name": "save file written",
+      "ok": true,
+      "detail": "{\"saved\":true,\"records\":51,\"hasEdit\":true,\"playerX\":69.5,\"invSlots\":37}"
+    },
+    {
+      "name": "torch emits light",
+      "ok": true,
+      "detail": "{\"placed\":true,\"queued\":8,\"lit\":true,\"atTorch\":14,\"twoAway\":12,\"torchBlock\":30}"
+    },
+    {
+      "name": "walking and chunk streaming",
+      "ok": true,
+      "detail": "{\"moved\":87.14,\"startY\":77,\"endY\":77,\"speed\":10.9,\"chunks\":374,\"meshQueue\":0,\"mode\":\"playing\",\"simMsPerFrame\":0.926}"
+    },
+    {
+      "name": "chat commands",
+      "ok": true,
+      "detail": "{\"got\":5,\"nightTime\":0.75}"
+    },
+    {
+      "name": "inventory UI",
+      "ok": true,
+      "detail": "{\"invOpen\":true,\"slots\":228,\"hotbar\":9,\"recipes\":22,\"invClosed\":true,\"paused\":true,\"debug\":true}"
+    },
+    {
+      "name": "hotbar has 9 slots",
+      "ok": true,
+      "detail": "{\"invOpen\":true,\"slots\":228,\"hotbar\":9,\"recipes\":22,\"invClosed\":true,\"paused\":true,\"debug\":true}"
+    },
+    {
+      "name": "recipe book",
+      "ok": true,
+      "detail": "22 recipes"
+    },
+    {
+      "name": "pause menu",
+      "ok": true
+    },
+    {
+      "name": "debug overlay",
+      "ok": true
+    },
+    {
+      "name": "simulation step is cheap (<4ms)",
+      "ok": true,
+      "detail": "0.857ms/frame (ceiling 1166 fps)"
+    },
+    {
+      "name": "average fps >= 60",
+      "ok": true,
+      "detail": "118.8 fps"
+    },
+    {
+      "name": "1% low fps >= 60",
+      "ok": true,
+      "detail": "117.6 fps"
+    },
+    {
+      "name": "lower screen renders solid terrain",
+      "ok": true,
+      "detail": "0.0% near-black pixels"
+    },
+    {
+      "name": "mesh vertex count matches 6 per quad",
+      "ok": true,
+      "detail": "0 bad of 101 chunks"
+    },
+    {
+      "name": "frame is bright enough to be a lit scene",
+      "ok": true,
+      "detail": "brightness 213.0"
+    },
+    {
+      "name": "sensitivity is in a sane range",
+      "ok": true,
+      "detail": "0.0022 rad/px"
+    },
+    {
+      "name": "100px turns a sensible angle",
+      "ok": true,
+      "detail": "12.6°"
+    },
+    {
+      "name": "look stops when the mouse stops",
+      "ok": true
+    },
+    {
+      "name": "a giant event cannot flip the camera",
+      "ok": true,
+      "detail": "-0.55 rad"
+    },
+    {
+      "name": "pitch stays clamped",
+      "ok": true
+    }
+  ],
+  "loadMs": 1290,
+  "world": {
+    "seed": 1919358098,
+    "chunks": 289,
+    "viewDistance": 8,
+    "biome": "平原",
+    "surfaceY": 65,
+    "playerY": 65,
+    "glRenderer": "ANGLE (Intel, Intel(R) Arc(TM) Graphics (0x00007D55) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+  },
+  "crafting": {
+    "itemCount": 107,
+    "toolCount": 20,
+    "recipeCount": 87,
+    "smeltCount": 8,
+    "grid2": {
+      "recipe": "planks",
+      "out": [
+        5,
+        4
+      ],
+      "expectPlanks": 5,
+      "ok": true,
+      "took": [
+        5,
+        4
+      ]
+    },
+    "grid3": {
+      "recipe": "wood_pickaxe",
+      "out": [
+        -22,
+        1
+      ],
+      "expectPickaxe": -22,
+      "ok": true
+    },
+    "grid3NeedsTable": true,
+    "furnace": {
+      "steps": 101,
+      "seconds": 10.1,
+      "output": [
+        -4,
+        1
+      ],
+      "inputLeft": 1,
+      "fuelLeft": 0,
+      "burn": 70,
+      "expectIngot": -4,
+      "ok": true
+    },
+    "oreDrop": -4,
+    "tool": {
+      "held": -22,
+      "expect": -22,
+      "isItem": true,
+      "toolClass": "pickaxe",
+      "blockTool": "pickaxe",
+      "speed": 2,
+      "effective": true,
+      "durabilityBefore": 60,
+      "durabilityAfter": 59
+    },
+    "eating": {
+      "ate": true,
+      "hunger": 15,
+      "left": 1
+    },
+    "armor": {
+      "helmetId": -51,
+      "chestId": -52,
+      "points": 4,
+      "rawDamage": 10,
+      "mitigatedDamage": 8.4,
+      "reduced": true,
+      "durabilityAfter": 287,
+      "maxDurability": 288,
+      "brokePieces": 0
+    },
+    "armorSlotFilter": true,
+    "bow": {
+      "isBow": true,
+      "power": 2,
+      "firedWithoutArrows": 0,
+      "arrowsBefore": 8,
+      "arrowsAfter": 7,
+      "arrowsInFlight": 1,
+      "arrowDamage": 6,
+      "arrowSpeed": 60,
+      "durability": 119
+    },
+    "chest": {
+      "slots": 27,
+      "takenBack": [
+        5,
+        30
+      ],
+      "slotCleared": true,
+      "savedKeys": 1,
+      "reloadedCount": 7,
+      "reloadedId": 5,
+      "ok": true
+    },
+    "iconFails": [],
+    "iconCount": 107,
+    "structures": {
+      "chestCount": 65,
+      "themes": {
+        "house": 15,
+        "mineshaft": 13,
+        "dungeon": 28,
+        "ruin": 9
+      },
+      "sample": {
+        "pos": [
+          70,
+          64,
+          55
+        ],
+        "theme": "house",
+        "filledSlots": 4,
+        "totalStacks": 13,
+        "deterministic": true
+      },
+      "nearby": {
+        "cobble": 110,
+        "planks": 36,
+        "torchBlocks": 1
+      }
+    },
+    "farming": {
+      "hoeId": -36,
+      "tilled": true,
+      "afterTill": 55,
+      "expectFarmland": 55,
+      "planted": true,
+      "afterPlant": 56,
+      "expectWheat": 56,
+      "stageAfterTicks": 3,
+      "harvested": -15,
+      "expectWheatItem": -15,
+      "breadOk": true
+    },
+    "sleeping": {
+      "refusedByDay": true,
+      "startedSleep": true,
+      "dayTimeAfter": 0.02,
+      "spawnMoved": true,
+      "isMorning": true
+    },
+    "mobs": {
+      "spiderParts": 15,
+      "spiderKind": "spider",
+      "spiderHasLegs": true,
+      "spiderAlive": true,
+      "arrowSpawned": true,
+      "hostileArrow": true,
+      "playerDamaged": true,
+      "damageTaken": 2
+    },
+    "dimensions": {
+      "obsId": 43,
+      "portalId": 58,
+      "slotId": -16,
+      "litOk": true,
+      "litCount": 6,
+      "fromDimension": "overworld",
+      "toDimension": "nether",
+      "inNether": true,
+      "arrival": [
+        8,
+        106,
+        9
+      ],
+      "aboveRoof": false,
+      "returnPortalBlocks": 12,
+      "census": {
+        "10": 7803,
+        "11": 4046,
+        "28": 324,
+        "43": 11,
+        "44": 20881,
+        "46": 107,
+        "58": 3
+      },
+      "hasNetherrack": true,
+      "hasLava": true,
+      "hasGlowstone": true,
+      "hasBedrock": true,
+      "backToOverworld": true,
+      "backPos": [
+        71,
+        69,
+        78
+      ]
+    },
+    "melee": {
+      "swordId": -35,
+      "hitSomething": true,
+      "swordDamage": 4,
+      "fistDamage": 1,
+      "swordBeatsFist": true,
+      "knockback": true
+    },
+    "enchant": {
+      "tableId": 59,
+      "hasTableRecipe": true,
+      "offerCount": 2,
+      "offerKeys": [
+        "unbreaking:1",
+        "sharpness:1"
+      ],
+      "applied": true,
+      "levelBefore": 30,
+      "levelAfter": 26,
+      "levelSpent": 4,
+      "enchantedKeys": [
+        "unbreaking"
+      ],
+      "effectLabel": "耐久 I",
+      "plainEff": 0,
+      "enchEff": 3
+    },
+    "trading": {
+      "professionsSeen": 4,
+      "deterministicVillager": true,
+      "opened": true,
+      "profession": "smith",
+      "offerCount": 3,
+      "offers": [
+        {
+          "give": "emeraldx3",
+          "get": "iron_pickaxex1",
+          "giveId": -12,
+          "getId": -32,
+          "max": 3
+        },
+        {
+          "give": "iron_ingotx4",
+          "get": "emeraldx1",
+          "giveId": -4,
+          "getId": -12,
+          "max": 12
+        },
+        {
+          "give": "emeraldx4",
+          "get": "iron_chestplatex1",
+          "giveId": -12,
+          "getId": -52,
+          "max": 3
+        }
+      ],
+      "tradeResult": {
+        "ok": true,
+        "paid": 3,
+        "received": 1,
+        "uses": 1,
+        "expectedPay": 3,
+        "expectedGet": 1
+      },
+      "refused": true,
+      "villagerKeepsExisting": true
+    },
+    "theEnd": {
+      "travelOk": true,
+      "dimension": "end",
+      "dragonSpawned": true,
+      "dragonHp": 200,
+      "dragonParts": 13,
+      "crystalCount": 10,
+      "healedWithCrystals": true,
+      "stoppedHealing": true,
+      "victory": true,
+      "victoryDebug": {
+        "hpBeforeKill": 1,
+        "hpAfter": -4,
+        "dead": true,
+        "bossRef": false,
+        "bossDefeated": true,
+        "victoryShown": true,
+        "uiMode": "victory"
+      },
+      "victoryShown": true,
+      "exitPortalBlocks": 9,
+      "pillarBlocks": 10,
+      "census": {
+        "11": 26,
+        "60": 2914
+      },
+      "hasEndStone": true,
+      "hasObsidian": false,
+      "arrivalY": 64,
+      "backHome": true
+    },
+    "brewing": {
+      "afterWart": [
+        "awkward_potion",
+        "awkward_potion",
+        null
+      ],
+      "afterSugar": [
+        "potion_swiftness",
+        "potion_swiftness",
+        null
+      ],
+      "awkwardOk": true,
+      "swiftOk": true,
+      "drank": true,
+      "speedMul": 1.2,
+      "speedOk": true,
+      "healedTo": 18,
+      "healedOk": true,
+      "poisonHealth": 3,
+      "poisonNeverKills": true,
+      "fireBefore": false,
+      "fireAfter": false,
+      "fireCancelled": true,
+      "effectsCleared": 0,
+      "potionItems": 16
+    },
+    "redstone": {
+      "lampOffBefore": true,
+      "wireOff": 0,
+      "pistonRetracted": true,
+      "leverOn": true,
+      "wireNear": 15,
+      "wireFar": 11,
+      "lampOn": true,
+      "pistonExtended": true,
+      "headPlaced": true,
+      "pushedBlock": true,
+      "lampOffAgain": true,
+      "pistonBack": true,
+      "blockPoweredWire": 15,
+      "buttonOn": 15,
+      "buttonOff": 0,
+      "plateOn": 15,
+      "plateOff": 0,
+      "plateBlockId": 71,
+      "expectPlateId": 71,
+      "wireAtLamp": 4,
+      "decayOk": true,
+      "debug": {
+        "leverOn": true,
+        "leverStateOn": true,
+        "cellIds": [
+          69,
+          67,
+          67,
+          67,
+          67,
+          67
+        ],
+        "cellPower": [
+          0,
+          15,
+          14,
+          13,
+          11,
+          10,
+          8
+        ],
+        "leverBlockId": 69,
+        "expectedLeverId": 69,
+        "maxPowerAtWire": 0,
+        "sources": []
+      },
+      "componentCount": 12
+    },
+    "hoppers": {
+      "registered": true,
+      "ticks": 6,
+      "srcLeft": 2,
+      "dstCount": 3,
+      "hopperLeft": 0,
+      "movedThrough": true,
+      "poweredNow": true,
+      "frozeWhilePowered": true,
+      "resumedWhenUnpowered": true,
+      "containerSlots": 9,
+      "chestSlots": 27
+    },
+    "repeaters": {
+      "repRegistered": true,
+      "hasRepeater": true,
+      "lampBefore": true,
+      "inputOn": true,
+      "delayed": true,
+      "lampAfterDelay": true,
+      "lampOffAgain": true,
+      "repState": {
+        "leverOn": false,
+        "buttonUntil": 0,
+        "plateOn": false,
+        "repOut": 0,
+        "repPending": null,
+        "repTimer": 0
+      },
+      "outPower": 0,
+      "repSeesInput": true,
+      "repFacing": 0,
+      "repStateAfterOneTick": {
+        "leverOn": false,
+        "buttonUntil": 0,
+        "plateOn": false,
+        "repOut": 0,
+        "repPending": 1,
+        "repTimer": 0.08
+      },
+      "repSetSize": 1,
+      "repIds": [
+        69,
+        67,
+        79,
+        67,
+        72
+      ],
+      "repPowers": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "lampPower": 0,
+      "lampIdBeforeLever": 72,
+      "lampIdAfterLever": 72,
+      "powersAfterLever": [
+        0,
+        15,
+        0,
+        0,
+        0
+      ],
+      "lampIdAfterOneTick": 72,
+      "repStateAfterLoop": {
+        "leverOn": false,
+        "buttonUntil": 0,
+        "plateOn": false,
+        "repOut": 1,
+        "repPending": null,
+        "repTimer": 0
+      },
+      "lampOffRightAfter": true,
+      "outWirePower": 15,
+      "lampIdAfterLoop": 73,
+      "inputPowerAfterOff": 0,
+      "repStateAfterOff": {
+        "leverOn": false,
+        "buttonUntil": 0,
+        "plateOn": false,
+        "repOut": 0,
+        "repPending": null,
+        "repTimer": 0
+      },
+      "leverStateAfterOff": {
+        "leverOn": false,
+        "buttonUntil": 0,
+        "plateOn": false
+      },
+      "wirePowerBeforeOff": 15,
+      "leverReturn": false,
+      "powerAtInputAfterOff": 0,
+      "leverStateRightAfter": {
+        "leverOn": false,
+        "buttonUntil": 0,
+        "plateOn": false
+      }
+    }
+  },
+  "ui": {
+    "invOpen": true,
+    "slots": 228,
+    "hotbar": 9,
+    "recipes": 22,
+    "invClosed": true,
+    "paused": true,
+    "debug": true
+  },
+  "simPerformance": {
+    "simMsPerFrame": 0.857,
+    "frames": 300,
+    "maxSimFps": 1166
+  },
+  "performance": {
+    "frames": 595,
+    "avgFps": 118.80278737296089,
+    "p99FrameMs": 8.5,
+    "fps1pctLow": 117.6470588235294,
+    "medianFps": 120.48192771082753,
+    "draws": 31,
+    "quads": 14109,
+    "viewDistance": 8
+  },
+  "visual": {
+    "blackRatio": 0,
+    "avgBrightness": 213,
+    "slots": 101,
+    "badSlots": 0,
+    "draws": 31
+  },
+  "mouseLook": {
+    "sens": 0.0022,
+    "yawAfter100": 0.22000000000000064,
+    "yawSettled": 0.22000000000000064,
+    "pitchAfterGiant": -0.55,
+    "pitchLimit": 1.5697963267948967
+  },
+  "logs": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "summary": {
+    "passed": 90,
+    "failed": 0,
+    "total": 90
+  }
+}

@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>MineWeb — 我的世界 Web 版</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%235d9b3f'/%3E%3Crect y='9' width='16' height='7' fill='%238b6236'/%3E%3C/svg%3E" />
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+<div id="viewport">
+  <canvas id="game"></canvas>
+
+  <!-- ------------------------------------------------------------ in-game HUD -->
+  <div id="hud" class="hidden">
+    <div id="crosshair" class="crosshair"></div>
+
+    <div id="debug" class="debug hidden"></div>
+    <div id="toasts" class="toasts"></div>
+
+    <div id="bottom-hud">
+      <div id="status">
+        <div id="hearts" class="icon-row"></div>
+        <div id="hunger" class="icon-row"></div>
+      </div>
+      <div id="xpbar"><div id="xpfill"></div><span id="xplevel">0</span></div>
+      <div id="hotbar" class="slot-row"></div>
+      <div id="held-name" class="held-name"></div>
+    </div>
+
+    <div id="bubbles" class="icon-row"></div>
+  </div>
+
+  <!-- ------------------------------------------------------------ inventory -->
+  <div id="inventory" class="overlay hidden">
+    <div class="panel">
+      <div class="panel-title">物品栏</div>
+      <div class="inv-layout">
+        <div class="inv-main">
+          <div class="inv-section-label">背包</div>
+          <div id="inv-main-grid" class="slot-grid"></div>
+          <div class="inv-section-label">快捷栏</div>
+          <div id="inv-hotbar-grid" class="slot-grid hotbar-grid"></div>
+        </div>
+        <div class="inv-side">
+          <div class="inv-section-label">装备</div>
+          <div id="armor-grid" class="slot-grid armor-grid"></div>
+          <div class="inv-section-label">合成</div>
+          <div class="craft-area">
+            <div id="craft-grid" class="slot-grid craft-grid"></div>
+            <div class="craft-arrow">→</div>
+            <div id="craft-out" class="slot-grid craft-out"></div>
+          </div>
+          <div class="inv-section-label">配方书</div>
+          <div id="recipe-book" class="recipe-book"></div>
+          <div class="inv-section-label">创造模式物品</div>
+          <div id="creative-grid" class="slot-grid creative-grid"></div>
+        </div>
+      </div>
+      <div class="panel-hint">左键拿取 / 右键分半 · Shift+左键 快速移动 · E 关闭</div>
+    </div>
+    <div id="cursor-stack" class="cursor-stack hidden"></div>
+  </div>
+
+  <!-- ------------------------------------------------------------ brewing -->
+  <div id="brewing" class="overlay hidden">
+    <div class="panel">
+      <div class="panel-title">酿造台</div>
+      <div class="brew-layout">
+        <div id="brew-ingredient" class="slot big-slot"></div>
+        <div class="brew-arrow">➜</div>
+        <div class="brew-bottles">
+          <div id="brew-bottle0" class="slot big-slot"></div>
+          <div id="brew-bottle1" class="slot big-slot"></div>
+          <div id="brew-bottle2" class="slot big-slot"></div>
+        </div>
+      </div>
+      <div class="brew-progress"><div id="brew-fill"></div></div>
+      <div class="panel-hint">上格放材料，下格放玻璃瓶 · 左下角配方表：水瓶 + 下界疣 → 粗制的药水</div>
+      <div class="inv-section-label">背包</div>
+      <div id="brew-inv-grid" class="slot-grid"></div>
+      <div class="inv-section-label">快捷栏</div>
+      <div id="brew-hotbar-grid" class="slot-grid hotbar-grid"></div>
+    </div>
+  </div>
+
+  <!-- ------------------------------------------------------------ status effects -->
+  <div id="effects" class="hidden"></div>
+
+  <!-- ------------------------------------------------------------ boss bar -->
+  <div id="boss-bar" class="hidden">
+    <div class="boss-name">末影龙</div>
+    <div class="boss-track"><div id="boss-fill"></div></div>
+  </div>
+
+  <!-- ------------------------------------------------------------ victory -->
+  <div id="victory" class="overlay hidden">
+    <div class="panel victory-panel">
+      <div class="victory-title">末影龙已被击败</div>
+      <div class="victory-sub">你通关了 MineWeb</div>
+      <div class="victory-poem">
+        你看见了终末之诗。<br>
+        方块的世界到此为止，<br>
+        而你的建造才刚刚开始。
+      </div>
+      <button id="btn-victory-close" class="mc-button wide">回到世界</button>
+    </div>
+  </div>
+
+  <!-- ------------------------------------------------------------ trading -->
+  <div id="trade" class="overlay hidden">
+    <div class="panel">
+      <div class="panel-title" id="trade-title">村民交易</div>
+      <div id="trade-offers" class="trade-offers"></div>
+      <div class="inv-section-label">背包</div>
+      <div id="trade-inv-grid" class="slot-grid"></div>
+      <div class="inv-section-label">快捷栏</div>
+      <div id="trade-hotbar-grid" class="slot-grid hotbar-grid"></div>
+      <div class="panel-hint">左键拿取 / 右键分半 · 点击交易条目完成交换 · E 或 Esc 关闭</div>
+    </div>
+  </div>
+
+  <!-- ------------------------------------------------------------ enchanting -->
+  <div id="enchant" class="overlay hidden">
+    <div class="panel">
+      <div class="panel-title">附魔台</div>
+      <div class="enchant-layout">
+        <div id="enchant-slot" class="slot big-slot"></div>
+        <div class="enchant-offers" id="enchant-offers"></div>
+      </div>
+      <div class="panel-hint">放入工具 / 剑 / 盔甲 / 弓，点击附魔花费经验等级 · E 或 Esc 关闭</div>
+    </div>
+  </div>
+
+  <!-- ------------------------------------------------------------ chest -->
+  <div id="chest" class="overlay hidden">
+    <div class="panel">
+      <div class="panel-title">箱子</div>
+      <div class="inv-section-label">箱内物品</div>
+      <div id="chest-grid" class="slot-grid"></div>
+      <div class="inv-section-label">背包</div>
+      <div id="chest-inv-grid" class="slot-grid"></div>
+      <div class="inv-section-label">快捷栏</div>
+      <div id="chest-hotbar-grid" class="slot-grid hotbar-grid"></div>
+      <div class="panel-hint">左键拿取 / 右键分半 / Shift+左键 快速移动 · E 或 Esc 关闭</div>
+    </div>
+  </div>
+
+  <!-- ------------------------------------------------------------ furnace -->
+  <div id="furnace" class="overlay hidden">
+    <div class="panel">
+      <div class="panel-title">熔炉</div>
+      <div class="furnace-layout">
+        <div class="furnace-col">
+          <div id="furnace-input" class="slot"></div>
+          <div class="furnace-flame"><div id="furnace-burn"></div></div>
+          <div id="furnace-fuel" class="slot"></div>
+        </div>
+        <div class="furnace-arrow">
+          <div class="furnace-progress"><div id="furnace-cook"></div></div>
+          <span>→</span>
+        </div>
+        <div id="furnace-output" class="slot"></div>
+      </div>
+      <div class="panel-hint">放入矿石与燃料（煤 / 木炭 / 木板）即可烧炼 · E 或 Esc 关闭</div>
+    </div>
+  </div>
+
+  <!-- ------------------------------------------------------------ pause menu -->
+  <div id="pause" class="overlay hidden">
+    <div class="panel menu-panel">
+      <div class="panel-title">游戏菜单</div>
+      <div class="menu-buttons">
+        <button id="btn-resume" class="mc-button">返回游戏</button>
+        <button id="btn-settings" class="mc-button">设置…</button>
+        <button id="btn-mode" class="mc-button">切换游戏模式</button>
+        <button id="btn-save" class="mc-button">保存世界</button>
+        <button id="btn-new" class="mc-button">新建世界…</button>
+      </div>
+      <div class="menu-seed">种子：<span id="menu-seed-value">—</span></div>
+    </div>
+  </div>
+
+  <!-- ------------------------------------------------------------ settings -->
+  <div id="settings" class="overlay hidden">
+    <div class="panel menu-panel">
+      <div class="panel-title">设置</div>
+      <div id="settings-list" class="settings-list"></div>
+      <div class="menu-buttons"><button id="btn-settings-back" class="mc-button">完成</button></div>
+    </div>
+  </div>
+
+  <!-- ------------------------------------------------------------ death screen -->
+  <div id="death" class="overlay hidden death-overlay">
+    <div class="death-title">你死了！</div>
+    <div class="death-sub" id="death-cause">游戏结束</div>
+    <button id="btn-respawn" class="mc-button">重生</button>
+  </div>
+
+  <!-- ------------------------------------------------------------ chat -->
+  <div id="chat" class="hidden">
+    <div id="chat-log"></div>
+    <input id="chat-input" type="text" maxlength="160" placeholder="输入消息或命令（/help）…" />
+  </div>
+
+  <!-- ------------------------------------------------------------ title / loading -->
+  <div id="title" class="overlay">
+    <div class="title-panel">
+      <h1 class="logo">MINEWEB</h1>
+      <div class="subtitle">我的世界 · Web 版 · WebGL2 体素引擎</div>
+      <div class="menu-buttons">
+        <button id="btn-play" class="mc-button wide">开始游戏</button>
+        <button id="btn-continue" class="mc-button wide hidden">继续上次的世界</button>
+        <button id="btn-title-settings" class="mc-button wide">设置…</button>
+      </div>
+      <div class="seed-row">
+        <label for="seed-input">世界种子</label>
+        <input id="seed-input" type="text" placeholder="留空随机" />
+      </div>
+      <div class="credits" id="title-credits">正在初始化引擎…</div>
+    </div>
+  </div>
+
+  <div id="loading" class="overlay hidden">
+    <div class="loading-panel">
+      <div class="loading-title">正在生成世界…</div>
+      <div class="progress"><div id="loading-bar"></div></div>
+      <div class="loading-detail" id="loading-detail">准备中</div>
+    </div>
+  </div>
+
+  <div id="fatal" class="overlay hidden">
+    <div class="panel menu-panel">
+      <div class="panel-title" style="color:#ff8080">启动失败</div>
+      <pre id="fatal-text" class="fatal-text"></pre>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
