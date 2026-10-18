@@ -1,7 +1,7 @@
 {
   "url": "http://127.0.0.1:8137/",
   "chrome": "C:\\Users\\11952\\AppData\\Local\\Google\\Chrome\\Application\\chrome.exe",
-  "port": 9378,
+  "port": 9351,
   "title": "MineWeb — 我的世界 Web 版",
   "canvasOk": true,
   "boot": {
@@ -12,13 +12,13 @@
   },
   "started": true,
   "sample": {
-    "frames": 1191,
-    "seconds": 10.002699999998509,
-    "avgFps": 119.10238204764079,
+    "frames": 1188,
+    "seconds": 10.005700000001491,
+    "avgFps": 118.80118801187996,
     "medianFrameMs": 8.300000000001091,
-    "fps1pctLow": 117.6470588235294,
-    "worstFrameMs": 24.899999999999636,
-    "p99FrameMs": 8.5
+    "fps1pctLow": 116.27906976743694,
+    "worstFrameMs": 25,
+    "p99FrameMs": 8.600000000000364
   },
   "engine": {
     "seed": 877887513,
@@ -32,11 +32,11 @@
       -35.5
     ],
     "biome": "平原",
-    "drawCalls": 96,
-    "quads": 102859,
-    "culled": 49,
+    "drawCalls": 104,
+    "quads": 112269,
+    "culled": 59,
     "glRenderer": "ANGLE (Intel, Intel(R) Arc(TM) Graphics (0x00007D55) Direct3D11 vs_5_0 ps_5_0, D3D11)",
-    "worldMemoryMB": 70.45
+    "worldMemoryMB": 75.78
   },
   "shots": [
     "shots-bench\\01-ground.png",
@@ -47,11 +47,11 @@
     "shots-bench\\06-inventory.png"
   ],
   "streaming": {
-    "avgFps": 119.99999999999999,
+    "avgFps": 119.75299382484557,
     "fps1pctLow": 117.6470588235294,
-    "frames": 480
+    "frames": 479
   },
-  "walked": 2.2,
+  "walked": 2.19,
   "inventorySlots": 228,
   "consoleErrors": [
     "Failed to load resource: the server responded with a status of 404 (Not Found)"

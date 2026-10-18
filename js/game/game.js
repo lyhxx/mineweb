@@ -14,6 +14,7 @@ import { rollVillager, resolveOffer, bindTradeResolver } from '../core/trades.js
 import { makeRng } from '../core/math.js';
 import { EFFECTS, DURATION, EffectTracker, parsePotionKey, brewResult } from '../core/potions.js';
 import { Bobber, rollCatch } from '../core/fishing.js';
+import { captureRegion, pasteBlueprint, BUILTIN_BLUEPRINTS } from '../world/blueprint.js';
 import { maxPowerAt, lastRecomputeSources, powerAt } from '../world/redstone.js';
 import { Input } from './input.js';
 import { Audio } from './audio.js';
@@ -1494,6 +1495,49 @@ export class Game {
     return result;
   }
 
+  // ------------------------------------------------------------------ blueprints
+  loadBlueprints() {
+    try { return JSON.parse(localStorage.getItem('mineweb.blueprints.v1') || '{}'); } catch (e) { return {}; }
+  }
+
+  saveBlueprints(map) {
+    try { localStorage.setItem('mineweb.blueprints.v1', JSON.stringify(map)); } catch (e) { /* full or blocked */ }
+  }
+
+  /** Capture a 15x15x15 box around the player so it can be pasted elsewhere. */
+  saveBlueprint(name) {
+    const p = this.player;
+    const r = 7;
+    const ox = Math.floor(p.x) - r;
+    const oy = Math.max(0, Math.floor(p.y) - 1);
+    const oz = Math.floor(p.z) - r;
+    const bp = captureRegion(this.world, ox, oy, oz, r * 2 + 1, 15, r * 2 + 1, name);
+    const all = this.loadBlueprints();
+    all[name] = bp;
+    this.saveBlueprints(all);
+    this.hud.toast('已保存蓝图 ' + name + '（' + bp.size.join('x') + '）');
+    return bp;
+  }
+
+  /** Paste a built-in, saved or remote blueprint at the player's feet. */
+  async pasteBlueprintNamed(name) {
+    if (!name) { this.hud.toast('用法：/paste <名字|地址>'); return 0; }
+    let bp = BUILTIN_BLUEPRINTS[name] || this.loadBlueprints()[name] || null;
+    try {
+      if (!bp && /^(https?:|data:)/.test(name)) {
+        const res = await fetch(name, { cache: 'no-store' });
+        bp = await res.json();
+      }
+    } catch (e) { bp = null; }
+    if (!bp) { this.hud.toast('找不到蓝图：' + name); return 0; }
+    const p = this.player;
+    const ox = Math.floor(p.x) - ((bp.size[0] / 2) | 0);
+    const oy = Math.floor(p.y);
+    const oz = Math.floor(p.z) - ((bp.size[2] / 2) | 0);
+    const n = pasteBlueprint(this.world, bp, ox, oy, oz);
+    this.hud.toast('已粘贴 ' + (bp.name || name) + '（' + n + ' 块）');
+    return n;
+  }
   // ------------------------------------------------------------------ texture packs
   /**
    * Load a texture pack manifest from a URL, or restore the built-in art.
@@ -2619,7 +2663,18 @@ export class Game {
       case 'help':
         this.hud.chatLine('/time set day|night · /tp x y z · /give block [n] · /gamemode creative|survival · /seed · /spawn · /kill · /weather clear|rain · /fps · /pack <url|off>', '#ffff88');
         break;
-      case 'pack':
+      case 'save':
+        if (!args[0]) { this.hud.toast('用法：/save <名字>'); break; }
+        this.saveBlueprint(args[0]);
+        break;
+      case 'paste':
+        this.pasteBlueprintNamed(args[0]);
+        break;
+      case 'bp': {
+        const names = Object.keys({ ...BUILTIN_BLUEPRINTS, ...this.loadBlueprints() });
+        this.hud.chatLine('蓝图：' + (names.join(' · ') || '（空）'), '#88ddff');
+        break;
+      }      case 'pack':
         this.loadTexturePack(args[0]);
         break;
       case 'time': {

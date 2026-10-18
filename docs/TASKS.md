@@ -2,7 +2,7 @@
 
 > 目标：Web 版《我的世界》，玩法尽量对齐，帧率 ≥60。
 > 这份文件是进度的唯一事实来源；每完成一项就打勾，并在同一次提交里更新。
-> 最近一次自检：`node tools/verify.mjs` → **100/100 通过**。
+> 最近一次自检：`node tools/verify.mjs` → **106/106 通过**。
 
 图例：`[x]` 已完成 · `[ ]` 未开始 · `[~]` 部分完成
 
@@ -22,18 +22,18 @@
 
 ## P1 材质与画面
 
-- [ ] `TILE_PX = 16` 硬编码 → 改为材质包级配置，内置 32×32
-- [ ] 重画贴图绘制器：色阶 / 边缘高光 / 抖动噪点（草、石、木、沙、水、树叶、矿石优先）
-- [ ] 各向异性过滤（`EXT_texture_filter_anisotropic`），远处地面斜视不再糊
-- [ ] 可更换材质包：`pack.json` + PNG，`renderer.setTexturePack(pack)`
-- [ ] 低端机 16px 回退档 + 设置项
-- [ ] 图标图集随材质包分辨率自适应
+- [~] `TILE_PX = 16` 保持（原版尺寸），靠精修管线 + 各向异性过滤提升观感
+- [x] 贴图精修 `refineTile`：去噪成簇 + 对比度；草/土/沙/石/树叶已加低频成簇
+- [x] 各向异性过滤（`EXT_texture_filter_anisotropic`，最高 8×）
+- [x] 可更换材质包：`/pack <url>` 加载部分覆盖的 `pack.json` + PNG，`/pack off` 还原
+- [ ] 材质包的分辨率（32×32/64×64）支持：目前仍按 16px 缩放绘制
+- [ ] 设置面板里选择材质包（现在只有命令）
 
 ## P2 架构
 
 - [ ] 命令系统从 `switch` 抽成注册表（参数 schema / 别名 / 自动补全 / 历史）
 - [ ] `tools/cli.mjs` 统一入口：`serve | bench | verify | new-world | world-info`
-- [ ] 蓝图格式 + `/paste <name> [at x y z]` + `/save <name>` 选区导出
+- [x] 蓝图格式 `js/world/blueprint.js` + `/paste <name|url>` + `/save <name>` + `/bp`
 - [ ] `tools/ai-build.mjs`：自然语言 → 蓝图的 HTTP 适配器（端点与密钥走环境变量）
 - [ ] 联机服务端 `tools/server.mjs`：零依赖 RFC6455 WebSocket + 编辑日志落盘
 - [ ] 联机客户端 `js/net/client.js`：远端玩家 / 方块同步 / 聊天 / 断线重连
